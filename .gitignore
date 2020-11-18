@@ -1,2 +1,5 @@
 # Project exclude paths
-/dist/js/
+/dist
+yarn.lock
+package-lock.json
+.idea
