@@ -1,0 +1,94 @@
+html {
+  width: 100vw;
+  height: 100vh;
+}
+
+body {
+  width: inherit;
+  height: inherit;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+// common
+.flex-column {
+  display: flex;
+  flex-direction: column;
+}
+
+.flex-center {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.flex-ac-js {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.flex-ac-fs {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+}
+
+.text-overflow {
+  text-overflow: ellipsis;
+  overflow: hidden;
+  white-space: nowrap;
+  vertical-align: middle;
+}
+
+
+// 组件样式修改
+.ivu-message-notice-content-text {
+  line-height: 39px !important;
+  font-size: 28px;
+
+  .ivu-icon {
+    font-size: inherit !important;
+  }
+}
+
+.ivu-message-notice-close {
+  top: 15px !important;
+
+  .ivu-icon {
+    font-size:36px !important;
+  }
+}
+
+.scroll-bar {
+  // 滚动条整体部分
+  &::-webkit-scrollbar {
+    height: 6px;
+    width: 6px;
+  }
+  // 滚动条两端的按钮
+  &::-webkit-scrollbar-button {
+    display: none;
+  }
+  // 外层轨道
+  &::-webkit-scrollbar-track {
+    background-color: #ffffffff;
+    border-radius: 3px;
+  }
+  // 内层滚动槽
+  &::-webkit-scrollbar-track-piece {
+  }
+  // 内部滑块
+  &::-webkit-scrollbar-thumb {
+    background-color: #5eb3d7;
+    border-radius: 3px;
+  }
+  // 边角
+  &::-webkit-scrollbar-corner {
+  }
+  // 定义右下角拖动块的样式
+  &::-webkit-resizer {
+  }
+}
