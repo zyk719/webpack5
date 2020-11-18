@@ -1,10 +1,13 @@
 const path = require('path')
+const webpack = require('webpack')
 const HtmlWebpackPlugin = require('html-webpack-plugin')
 const BundleAnalyzerPlugin = require('webpack-bundle-analyzer')
     .BundleAnalyzerPlugin
 const { CleanWebpackPlugin } = require('clean-webpack-plugin')
 const VueLoaderPlugin = require('vue-loader/lib/plugin')
 const MiniCssExtractPlugin = require('mini-css-extract-plugin')
+
+const env = require('./env.js')
 
 module.exports = {
     mode: process.env.NODE_ENV,
@@ -16,6 +19,7 @@ module.exports = {
         path: path.resolve(__dirname, './dist'),
         filename: './js/[name].[contenthash].js',
     },
+    devtool: 'inline-source-map',
     devServer: {
         contentBase: path.join(__dirname, '/dist'),
         port: 8087,
@@ -37,10 +41,10 @@ module.exports = {
                     /node_modules/.test(file) && !/\.vue\.js/.test(file),
             },
             // CSS
-            // vue-style-loader
+            // MiniCssExtractPlugin.loader todo production
             {
                 test: /\.(le|c)ss$/,
-                use: [MiniCssExtractPlugin.loader, 'css-loader', 'less-loader'],
+                use: ['style-loader', 'css-loader', 'less-loader'],
             },
             // SVG
             {
@@ -54,7 +58,7 @@ module.exports = {
                 test: /\.woff2|woff|ttf$/,
                 loader: 'file-loader',
                 options: {
-                    name: '/fonts/[name].[contentHash].[ext]',
+                    name: './fonts/[name].[contentHash].[ext]',
                 },
             },
         ],
@@ -65,10 +69,14 @@ module.exports = {
         new HtmlWebpackPlugin({
             template: path.resolve(__dirname, './public/index.html'),
         }),
-        new BundleAnalyzerPlugin({}),
-        new MiniCssExtractPlugin({
-            filename: './css/[name].css',
+        // new BundleAnalyzerPlugin({}),
+        // new MiniCssExtractPlugin({
+        //     filename: './css/[name].css',
+        // }),
+        new webpack.DefinePlugin({
+            'process.env': env,
         }),
+        // new webpack.HotModuleReplacementPlugin(),
     ],
     resolve: {
         alias: {
