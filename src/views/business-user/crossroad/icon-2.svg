@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="138px" height="138px" viewBox="0 0 138 138" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+    <title>形状结合备份 6</title>
+    <defs>
+        <linearGradient x1="50%" y1="0%" x2="50%" y2="100%" id="linearGradient-1">
+            <stop stop-color="#FCFDFE" offset="0%"></stop>
+            <stop stop-color="#FEF5E0" offset="100%"></stop>
+        </linearGradient>
+        <path d="M730,406 C763.137085,406 790,379.137085 790,346 C790,312.862915 763.137085,286 730,286 C696.862915,286 670,312.862915 670,346 C670,379.137085 696.862915,406 730,406 Z M758.633835,368.887969 L747.113136,357.268744 C755.102309,346.295799 753.293039,331.036758 742.958301,322.227664 C732.623564,313.418571 717.238639,314.021674 707.628142,323.612639 C698.017645,333.203605 697.413314,348.557262 706.240347,358.870995 C715.06738,369.184729 730.357496,370.990322 741.352787,363.017386 L752.978219,374.619191 C753.957448,375.749899 755.487827,376.239546 756.943295,375.887826 C758.398764,375.536105 759.53516,374.402018 759.887597,372.949508 C760.240034,371.496997 759.749389,369.969728 758.616379,368.99249 L758.633835,368.887969 Z M726.009311,359.951443 C716.050712,359.951443 707.977673,351.894811 707.977673,341.956451 C707.977673,332.018092 716.050712,323.961459 726.009311,323.961459 C735.96791,323.961459 744.04095,332.018092 744.04095,341.956451 C744.031327,351.89083 735.963922,359.94184 726.009311,359.951443 L726.009311,359.951443 Z" id="path-2"></path>
+        <filter x="-12.5%" y="-10.0%" width="125.0%" height="125.0%" filterUnits="objectBoundingBox" id="filter-3">
+            <feOffset dx="0" dy="3" in="SourceAlpha" result="shadowOffsetOuter1"></feOffset>
+            <feGaussianBlur stdDeviation="4.5" in="shadowOffsetOuter1" result="shadowBlurOuter1"></feGaussianBlur>
+            <feColorMatrix values="0 0 0 0 0.741176471   0 0 0 0 0.596592409   0 0 0 0 0.321568627  0 0 0 1 0" type="matrix" in="shadowBlurOuter1"></feColorMatrix>
+        </filter>
+    </defs>
+    <g id="一体机" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
+        <g id="形状结合备份-6" transform="translate(-661.000000, -280.000000)">
+            <use fill="black" fill-opacity="1" filter="url(#filter-3)" xlink:href="#path-2"></use>
+            <use fill="url(#linearGradient-1)" fill-rule="evenodd" xlink:href="#path-2"></use>
+        </g>
+    </g>
+</svg>

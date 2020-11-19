@@ -5,8 +5,11 @@ const webpack = require('webpack')
 const HtmlWebpackPlugin = require('html-webpack-plugin')
 const { CleanWebpackPlugin } = require('clean-webpack-plugin')
 const VueLoaderPlugin = require('vue-loader/lib/plugin')
+const CopyWebpackPlugin = require('copy-webpack-plugin')
 const MiniCssExtractPlugin = require('mini-css-extract-plugin')
 const webpackBundleAnalyzer = require('webpack-bundle-analyzer')
+const VersionPlugin = require('./webpack-plugin/version-webpack-plugin')
+const AddScriptWebpackPlugin = require('./webpack-plugin/add-script-webpack-plugin')
 
 /** 环境变量 */
 const env = require('./env.js')
@@ -34,7 +37,7 @@ const rules = ((env) => {
                     options: {
                         patterns: path.resolve(
                             __dirname,
-                            './src/assets/style/variablesMixins.less'
+                            './src/variablesMixins.less'
                         ),
                         injector: 'append',
                     },
@@ -72,10 +75,13 @@ const plugins = ((env) => {
 })(process.env.NODE_ENV)
 
 /** 代理前缀和转发地址 */
-const proxyBase = env.VUE_APP_PROXY_BASE
-const target = env.VUE_APP_BASEURL
-const proxyBaseNews = env.VUE_APP_PROXY_BASE_NEWS
-const targetNews = env.VUE_APP_BASEURL_NEWS
+const {
+    VUE_APP_PROXY_BASE,
+    VUE_APP_BASEURL,
+    VUE_APP_PROXY_BASE_NEWS,
+    VUE_APP_BASEURL_NEWS,
+} = env
+Object.keys(env).forEach((key) => (env[key] = JSON.stringify(env[key])))
 
 // webpack 配置项
 const dynamicConfig = {
@@ -96,21 +102,21 @@ const dynamicConfig = {
         port: 7777,
         proxy: {
             // 基础接口转发
-            [proxyBase]: {
-                target,
+            [VUE_APP_PROXY_BASE]: {
+                target: VUE_APP_BASEURL,
                 ws: false,
                 changeOrigin: true,
                 pathRewrite: {
-                    [proxyBase]: '',
+                    [VUE_APP_PROXY_BASE]: '',
                 },
             },
             // 新闻接口转发
-            [proxyBaseNews]: {
-                target: targetNews,
+            [VUE_APP_PROXY_BASE_NEWS]: {
+                target: VUE_APP_BASEURL_NEWS,
                 ws: false,
                 changeOrigin: true,
                 pathRewrite: {
-                    [proxyBaseNews]: '',
+                    [VUE_APP_PROXY_BASE_NEWS]: '',
                 },
             },
         },
@@ -131,7 +137,7 @@ const dynamicConfig = {
                         options: {
                             esModule: false,
                             limit: 8192,
-                            name: './images/[name].[contentHash:8].[ext]',
+                            name: './images/[name].[contenthash].[ext]',
                         },
                     },
                 ],
@@ -144,7 +150,7 @@ const dynamicConfig = {
                         loader: 'file-loader',
                         options: {
                             esModule: false,
-                            name: './fonts/[name].[contentHash].[ext]',
+                            name: './fonts/[name].[contenthash].[ext]',
                         },
                     },
                 ],
@@ -161,11 +167,34 @@ const dynamicConfig = {
         new webpack.DefinePlugin({
             'process.env': env,
         }),
+        new VersionPlugin(),
+        new CopyWebpackPlugin({
+            patterns: [
+                {
+                    from: path.resolve(__dirname, './public'),
+                    to: path.resolve(__dirname, './dist/externals'),
+                    globOptions: {
+                        ignore: ['**/public/*.html'],
+                    },
+                },
+            ],
+            options: {
+                concurrency: 100,
+            },
+        }),
+        new AddScriptWebpackPlugin({
+            script: `<script src=externals/ecjrjs.min.js></script>`,
+        }),
+        new AddScriptWebpackPlugin({
+            script: `<script src=externals/jquery.min.js></script>`,
+        }),
         ...plugins,
     ],
     resolve: {
         alias: {
             '@': path.resolve(__dirname, './src'),
+            crypto: 'crypto-browserify',
+            stream: 'stream-browserify',
         },
         extensions: ['.js', '.vue'],
     },

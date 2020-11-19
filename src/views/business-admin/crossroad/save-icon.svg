@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="138px" height="138px" viewBox="0 0 138 138" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+    <title>形状结合备份 9</title>
+    <defs>
+        <linearGradient x1="50%" y1="0%" x2="50%" y2="100%" id="linearGradient-1">
+            <stop stop-color="#FCFDFE" offset="0%"></stop>
+            <stop stop-color="#E0FEF2" offset="100%"></stop>
+        </linearGradient>
+        <path d="M420,451 C453.137085,451 480,477.862915 480,511 C480,544.137085 453.137085,571 420,571 C386.862915,571 360,544.137085 360,511 C360,477.862915 386.862915,451 420,451 Z M409.2,520.578947 L393,520.578947 L393,534.263158 C393,535.905263 394.08,537 395.7,537 L395.7,537 L444.3,537 C445.92,537 447,535.905263 447,534.263158 L447,534.263158 L447,520.578947 L430.8,520.578947 L430.8,526.052632 L409.2,526.052632 L409.2,520.578947 Z M438.9,485 L401.1,485 C399.48,485 398.4,486.094737 398.4,487.736842 L398.4,487.736842 L398.4,515.105263 L411.9,515.105263 L411.9,520.578947 L428.1,520.578947 L428.1,515.105263 L441.6,515.105263 L441.6,487.736842 C441.6,486.094737 440.52,485 438.9,485 L438.9,485 Z" id="path-2"></path>
+        <filter x="-12.5%" y="-10.0%" width="125.0%" height="125.0%" filterUnits="objectBoundingBox" id="filter-3">
+            <feOffset dx="0" dy="3" in="SourceAlpha" result="shadowOffsetOuter1"></feOffset>
+            <feGaussianBlur stdDeviation="4.5" in="shadowOffsetOuter1" result="shadowBlurOuter1"></feGaussianBlur>
+            <feColorMatrix values="0 0 0 0 0.325490196   0 0 0 0 0.596078431   0 0 0 0 0.458823529  0 0 0 1 0" type="matrix" in="shadowBlurOuter1"></feColorMatrix>
+        </filter>
+    </defs>
+    <g id="一体机" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
+        <g id="形状结合备份-9" transform="translate(-351.000000, -445.000000)">
+            <use fill="black" fill-opacity="1" filter="url(#filter-3)" xlink:href="#path-2"></use>
+            <use fill="url(#linearGradient-1)" fill-rule="evenodd" xlink:href="#path-2"></use>
+        </g>
+    </g>
+</svg>

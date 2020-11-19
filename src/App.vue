@@ -24,10 +24,10 @@ export default {
         }
     },
     created() {
-        // suitScale(this.scale)
+        suitScale(this.scale)
     },
     mounted() {
-        // window.onresize = suitScale.bind(this, this.scale)
+        window.onresize = suitScale.bind(this, this.scale)
     },
 }
 </script>

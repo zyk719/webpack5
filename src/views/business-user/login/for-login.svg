@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="53px" height="96px" viewBox="0 0 53 96" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+    <title>编组 3</title>
+    <g id="一体机" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
+        <g id="未插卡" transform="translate(-672.000000, -571.000000)" fill="#396886">
+            <g id="编组-3" transform="translate(672.000000, 571.000000)">
+                <polygon id="矩形" opacity="0.200000003" transform="translate(26.631579, 14.789474) rotate(-90.000000) translate(-26.631579, -14.789474) " points="25.8421053 -11.5263158 41.1052632 -11.5263158 27.4210526 14.7894737 41.1052632 41.1052632 25.8421053 41.1052632 12.1578947 14.7894737"></polygon>
+                <polygon id="矩形备份-8" transform="translate(26.631579, 80.684211) rotate(-90.000000) translate(-26.631579, -80.684211) " points="25.8421053 54.3684211 41.1052632 54.3684211 27.4210526 80.6842105 41.1052632 107 25.8421053 107 12.1578947 80.6842105"></polygon>
+                <polygon id="矩形备份-7" opacity="0.5" transform="translate(26.631579, 47.736842) rotate(-90.000000) translate(-26.631579, -47.736842) " points="25.8421053 21.4210526 41.1052632 21.4210526 27.4210526 47.7368421 41.1052632 74.0526316 25.8421053 74.0526316 12.1578947 47.7368421"></polygon>
+            </g>
+        </g>
+    </g>
+</svg>

@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="138px" height="138px" viewBox="0 0 138 138" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+    <title>形状结合备份 11</title>
+    <defs>
+        <linearGradient x1="50%" y1="0%" x2="50%" y2="100%" id="linearGradient-1">
+            <stop stop-color="#FCFDFE" offset="0%"></stop>
+            <stop stop-color="#FEF5E0" offset="100%"></stop>
+        </linearGradient>
+        <path d="M960,451 C993.137085,451 1020,477.862915 1020,511 C1020,544.137085 993.137085,571 960,571 C926.862915,571 900,544.137085 900,511 C900,477.862915 926.862915,451 960,451 Z M950.859136,486.569231 L945.043893,486.569231 L933,513.153846 L933,536 L987,536 L987,513.153846 L974.951514,486.569231 L969.136271,486.569231 L969.136271,491.138462 L972.043893,491.138462 L982.011569,513.569231 L969.967676,513.569231 L965.397244,520.215385 L954.184757,520.215385 L949.614325,513.569231 L937.570432,513.569231 L947.951514,491.138462 L950.859136,491.138462 L950.859136,486.569231 Z M960,482 L948.778326,495.292308 L955.424975,495.292308 L955.424975,515.646154 L964.570432,515.646154 L964.570432,495.292308 L971.212487,495.292308 L960,482 Z" id="path-2"></path>
+        <filter x="-12.5%" y="-10.0%" width="125.0%" height="125.0%" filterUnits="objectBoundingBox" id="filter-3">
+            <feOffset dx="0" dy="3" in="SourceAlpha" result="shadowOffsetOuter1"></feOffset>
+            <feGaussianBlur stdDeviation="4.5" in="shadowOffsetOuter1" result="shadowBlurOuter1"></feGaussianBlur>
+            <feColorMatrix values="0 0 0 0 0.741176471   0 0 0 0 0.596592409   0 0 0 0 0.321568627  0 0 0 1 0" type="matrix" in="shadowBlurOuter1"></feColorMatrix>
+        </filter>
+    </defs>
+    <g id="一体机" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
+        <g id="形状结合备份-11" transform="translate(-891.000000, -445.000000)">
+            <use fill="black" fill-opacity="1" filter="url(#filter-3)" xlink:href="#path-2"></use>
+            <use fill="url(#linearGradient-1)" fill-rule="evenodd" xlink:href="#path-2"></use>
+        </g>
+    </g>
+</svg>

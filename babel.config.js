@@ -8,5 +8,11 @@ module.exports = {
                 libraryDirectory: 'src/components',
             },
         ],
+        [
+            '@babel/plugin-transform-runtime',
+            {
+                regenerator: true,
+            },
+        ],
     ],
 }

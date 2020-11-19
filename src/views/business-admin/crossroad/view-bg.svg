@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="420px" height="610px" viewBox="0 0 420 610" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+    <title>矩形备份 8</title>
+    <defs>
+        <rect id="path-1" x="0" y="0" width="420" height="600" rx="17.699115"></rect>
+        <filter x="-1.2%" y="-0.8%" width="102.4%" height="103.3%" filterUnits="objectBoundingBox" id="filter-3">
+            <feOffset dx="0" dy="10" in="SourceAlpha" result="shadowOffsetOuter1"></feOffset>
+            <feColorMatrix values="0 0 0 0 0.317647059   0 0 0 0 0.623529412   0 0 0 0 0.749019608  0 0 0 1 0" type="matrix" in="shadowOffsetOuter1"></feColorMatrix>
+        </filter>
+        <linearGradient x1="50%" y1="0%" x2="50%" y2="100%" id="linearGradient-4">
+            <stop stop-color="#7FC5E3" offset="0%"></stop>
+            <stop stop-color="#7BC2DF" stop-opacity="0" offset="100%"></stop>
+        </linearGradient>
+    </defs>
+    <g id="一体机" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
+        <g id="管理员模式" transform="translate(-1290.000000, -270.000000)">
+            <g id="矩形备份-8" transform="translate(1290.000000, 270.000000)">
+                <mask id="mask-2" fill="white">
+                    <use xlink:href="#path-1"></use>
+                </mask>
+                <g id="蒙版">
+                    <use fill="black" fill-opacity="1" filter="url(#filter-3)" xlink:href="#path-1"></use>
+                    <use fill="#5EB3D7" fill-rule="evenodd" xlink:href="#path-1"></use>
+                </g>
+                <polygon id="矩形备份-2" fill="url(#linearGradient-4)" mask="url(#mask-2)" points="303.333333 0 420 0 420 600 120 600"></polygon>
+            </g>
+        </g>
+    </g>
+</svg>
