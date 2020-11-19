@@ -1,4 +1,4 @@
-import { Button, Message } from 'view-design'
+import { Message, Button, Icon } from 'view-design'
 
 Message.config({
     top: 108,
@@ -6,8 +6,9 @@ Message.config({
 })
 
 function injectUi(Vue) {
-    Vue.component('Button', Button)
     Vue.prototype.$Message = Message
+    Vue.component('Button', Button)
+    Vue.component('Icon', Icon)
 }
 
 export default injectUi

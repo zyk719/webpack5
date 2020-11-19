@@ -3,7 +3,9 @@
         HelloWorld
         <div>{{ hello }}</div>
         <div>{{ world }}</div>
+        <img src="./demo.png" alt="demo" />
         <Button type="primary">HXHX</Button>
+        <Icon type="ios-checkmark"></Icon>
     </div>
 </template>
 
@@ -17,13 +19,13 @@ export default {
         }
     },
     mounted() {
-        console.log(process.env.BASE_URL, '123')
+        console.log(process.env.VUE_APP_BASEURL, '123')
     },
 }
 </script>
 
 <style scoped lang="less">
 .hello {
-    color: red;
+    color: @primary;
 }
 </style>
