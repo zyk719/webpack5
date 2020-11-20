@@ -6,16 +6,20 @@
                 <router-view class="route" />
             </keep-alive>
         </div>
+        <ScreenSaver />
     </div>
 </template>
 
 <script>
 // components
 import Title from '@/views/components/Title'
+// import ScreenSaver from '@/components/ScreenSaver'
+const ScreenSaver = () =>
+    import(/* webpackChunkName: "screenSaver" */ '@/components/ScreenSaver')
 
 export default {
     name: 'Layout',
-    components: { Title },
+    components: { Title, ScreenSaver },
     data() {
         return {
             include: ['Crossroad', 'Video', 'Info'],

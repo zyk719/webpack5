@@ -36,6 +36,8 @@ export const LOGIC_NAME = {
     CHECKIN: 'BillScanner',
     // 灯光
     GUIDE_LIGHTS: 'GuideLights',
+    // 打印器
+    PRINTER: 'FingerPrinter',
 }
 
 export const API = {

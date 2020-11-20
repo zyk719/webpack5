@@ -18,12 +18,22 @@ import returnBox from '@/store/bussiness/returnBox'
 import guideLight from '@/store/bussiness/guideLight'
 // 键盘
 import ime from '@/store/bussiness/ime'
+// 打印器
+import printer from '@/store/bussiness/printer'
 // 初始化数据
 import cache from '@/store/bussiness/cache'
 
 Vue.use(Vuex)
 
 export default new Vuex.Store({
+    state: {
+        screenSaver: false,
+    },
+    mutations: {
+        toggleScreenSaver(state, status) {
+            state.screenSaver = status
+        },
+    },
     modules: {
         user,
         dictionary,
@@ -34,5 +44,6 @@ export default new Vuex.Store({
         ime,
         cache,
         guideLight,
+        printer,
     },
 })

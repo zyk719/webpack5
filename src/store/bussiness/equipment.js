@@ -21,7 +21,7 @@ const API = {
 }
 
 // 初始化设备控制器
-const initEquipment = store => {
+const initEquipment = (store) => {
     const idc = new window.ecjrjs.Idc(null, 'idc')
     store.commit('setIdc', idc)
     log('读卡器 >>> 初始化完成！')
@@ -41,6 +41,10 @@ const initEquipment = store => {
     const checkin = window.qtObjects.chkin
     store.commit('setCheckin', checkin)
     log('退标器 >>> 初始化完成！')
+
+    const printer = window.qtObjects.fpc
+    store.commit('setPrinter', printer)
+    log('打印器 >>> 初始化完成！')
 
     // more...
 }
@@ -73,8 +77,8 @@ const equipment = {
         },
         // 领标模块
         takeBox(state) {
-            return boxType =>
-                state.boxInfo.filter(box => box.box_type === boxType)
+            return (boxType) =>
+                state.boxInfo.filter((box) => box.box_type === boxType)
         },
     },
     mutations: {
@@ -106,8 +110,8 @@ const equipment = {
             initEquipment(store)
         },
         async getEquipmentBase({ commit, dispatch }) {
-            const equipmentBase = await new Promise(resolve => {
-                window.qtObjects.common[API.GET_MAC](macInfo => {
+            const equipmentBase = await new Promise((resolve) => {
+                window.qtObjects.common[API.GET_MAC]((macInfo) => {
                     const mac = JSON.parse(macInfo)['MACINFO'][0]['MACADDRESS']
                     resolve({ mac })
                 })

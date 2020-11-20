@@ -193,12 +193,12 @@ const dynamicConfig = {
                 concurrency: 100,
             },
         }),
-        new AddScriptWebpackPlugin({
-            script: `<script src=externals/ecjrjs.min.js></script>`,
-        }),
-        new AddScriptWebpackPlugin({
-            script: `<script src=externals/jquery.min.js></script>`,
-        }),
+        // new AddScriptWebpackPlugin({
+        //     script: `<script src=externals/ecjrjs.min.js></script>`,
+        // }),
+        // new AddScriptWebpackPlugin({
+        //     script: `<script src=externals/jquery.min.js></script>`,
+        // }),
         ...plugins,
     ],
     resolve: {

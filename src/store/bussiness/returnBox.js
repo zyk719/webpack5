@@ -2,8 +2,6 @@
 
 /** helpers */
 import { log } from '@/libs/treasure'
-import { Message } from 'view-design'
-import { confirmOpen, confirmHealthy } from '@/store/bussiness/common'
 import EventNotifiers from '@/store/bussiness/EventNotifiers'
 
 /** constant */
@@ -67,21 +65,21 @@ const returnBox = {
         readImageCheckin({ dispatch, commit, state }) {
             commit('removeAll')
             // 关闭 > 打开
-            state.subscriber.add('OpenCompleted', res => {
+            state.subscriber.add('OpenCompleted', (res) => {
                 console.log('my OpenCompleted', res)
                 console.log('退标器状态', state.controller.strState)
                 dispatch('readyCheckin')
             })
             // 打开 > 打开
-            state.subscriber.add('ConnectionOpened', res => {
+            state.subscriber.add('ConnectionOpened', (res) => {
                 console.log('my ConnectionOpened', res)
                 console.log('退标器状态', state.controller.strState)
                 dispatch('readyCheckin')
             })
-            state.subscriber.add('FatalError', res => {
+            state.subscriber.add('FatalError', (res) => {
                 console.log('my FatalError', res)
             })
-            state.subscriber.add('Timeout', res => {
+            state.subscriber.add('Timeout', (res) => {
                 console.log('my Timeout', res)
             })
             state.controller[API.CONNECT](LOGIC_NAME.CHECKIN, TIMEOUT.CONNECT)
@@ -90,33 +88,33 @@ const returnBox = {
         readyCheckin({ dispatch, commit, state }) {
             dispatch('lightCheckin')
             commit('removeAll')
-            state.subscriber.add('ReadImageComplete', res => {
+            state.subscriber.add('ReadImageComplete', (res) => {
                 console.log('my ReadImageComplete', res)
                 // const count = res.labelAccnum
                 // commit('setCount', count)
             })
-            state.subscriber.add('DeviceError', res => {
+            state.subscriber.add('DeviceError', (res) => {
                 console.log('DeviceError', res)
             })
-            state.subscriber.add('FatalError', res => {
+            state.subscriber.add('FatalError', (res) => {
                 console.log('FatalError', res)
             })
-            state.subscriber.add('DataMissing', res => {
+            state.subscriber.add('DataMissing', (res) => {
                 console.log('DataMissing', res)
             })
-            state.subscriber.add('DataNotSupport', res => {
+            state.subscriber.add('DataNotSupport', (res) => {
                 console.log('DataNotSupport', res)
             })
-            state.subscriber.add('MediaInserted', res => {
+            state.subscriber.add('MediaInserted', (res) => {
                 console.log('MediaInserted', res)
             })
-            state.subscriber.add('Timeout', res => {
+            state.subscriber.add('Timeout', (res) => {
                 console.log('Timeout', res)
             })
-            state.subscriber.add('PrintHalted', res => {
+            state.subscriber.add('PrintHalted', (res) => {
                 console.log('PrintHalted', res)
             })
-            state.subscriber.add('NoMedia', res => {
+            state.subscriber.add('NoMedia', (res) => {
                 res = JSON.parse(res)
                 const count = res.labelAccnum
                 commit('setCount', count)
@@ -132,7 +130,7 @@ const returnBox = {
         },
         // 完成读卡
         doneCheckin({ dispatch, state }) {
-            state.controller[API.DONE_CHECKIN](res => {
+            state.controller[API.DONE_CHECKIN]((res) => {
                 console.log(res)
                 console.log('退标器结束', state.controller.strState)
             })
