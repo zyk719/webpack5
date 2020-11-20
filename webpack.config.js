@@ -30,7 +30,12 @@ const rules = ((env) => {
             test: /\.less$/,
             use: [
                 cssLoaderMapper[env],
-                'css-loader',
+                {
+                    loader: 'css-loader',
+                    options: {
+                        sourceMap: process.env.NODE_ENV === 'development',
+                    },
+                },
                 'less-loader',
                 {
                     loader: 'style-resources-loader',
@@ -52,6 +57,7 @@ const rules = ((env) => {
         const js = {
             test: /\.js$/,
             // todo 兼容性配置
+            // todo 摇树
             loader: 'babel-loader',
             exclude: (file) =>
                 /node_modules/.test(file) && !/\.vue\.js/.test(file),
@@ -63,7 +69,7 @@ const rules = ((env) => {
 })(process.env.NODE_ENV)
 const plugins = ((env) => {
     const plugins = [
-        new webpackBundleAnalyzer.BundleAnalyzerPlugin(),
+        // new webpackBundleAnalyzer.BundleAnalyzerPlugin(),
         new MiniCssExtractPlugin({
             filename: './css/[name].[contenthash].css',
         }),
@@ -97,7 +103,7 @@ const dynamicConfig = {
     devtool: 'inline-source-map',
     devServer: {
         contentBase: path.resolve(__dirname, './dist'),
-        writeToDisk: true,
+        writeToDisk: false,
         overlay: true,
         port: 7777,
         proxy: {
@@ -137,7 +143,10 @@ const dynamicConfig = {
                         options: {
                             esModule: false,
                             limit: 8192,
-                            name: './images/[name].[contenthash].[ext]',
+                            name: '[name].[contenthash].[ext]',
+                            outputPath: 'images',
+                            publicPath: '../images',
+                            // todo 去除不要的图片
                         },
                     },
                 ],
@@ -150,7 +159,9 @@ const dynamicConfig = {
                         loader: 'file-loader',
                         options: {
                             esModule: false,
-                            name: './fonts/[name].[contenthash].[ext]',
+                            name: '[name].[contenthash].[ext]',
+                            outputPath: 'fonts',
+                            publicPath: '../fonts',
                         },
                     },
                 ],
