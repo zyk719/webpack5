@@ -42,8 +42,8 @@ const initEquipment = (store) => {
     store.commit('setCheckin', checkin)
     log('退标器 >>> 初始化完成！')
 
-    const printer = window.qtObjects.fpc
-    store.commit('setPrinter', printer)
+    const printer = window.qtObjects.rec
+    store.commit('setPrinterController', printer)
     log('打印器 >>> 初始化完成！')
 
     // more...

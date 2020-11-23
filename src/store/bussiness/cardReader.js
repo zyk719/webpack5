@@ -1,3 +1,5 @@
+// todo 一长串的报错定位
+
 /** 读卡器模块 */
 import router from '@/router'
 
@@ -29,7 +31,7 @@ const xLog = log.bind(null, EQUIPMENT_NAME)
 export const USER_LOGIN_STATUS_NAME = 'userLogin'
 
 function buildReadCardParams() {
-    const removeSplit = str => str.replace('/,/g', '').replace(/ /g, '')
+    const removeSplit = (str) => str.replace('/,/g', '').replace(/ /g, '')
     const token = '?'
     const protocol = 0
     const bytes =
@@ -134,7 +136,7 @@ const cardReader = {
                 LOGIC_NAME.IDC_TRACK_MAP,
                 TIMEOUT.INSERT,
                 // 回调会在在放卡时和放卡后被触发
-                evt => xLog('《==<-- 读卡监听的回调值 -->==>', evt)
+                (evt) => xLog('《==<-- 读卡监听的回调值 -->==>', evt)
             )
 
             /** 2. 灯光关闭 */

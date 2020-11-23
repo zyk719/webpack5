@@ -64,13 +64,13 @@ const returnBox = {
         // 打开退标器
         readImageCheckin({ dispatch, commit, state }) {
             commit('removeAll')
-            // 关闭 > 打开
+            // 关闭时 > 打开
             state.subscriber.add('OpenCompleted', (res) => {
                 console.log('my OpenCompleted', res)
                 console.log('退标器状态', state.controller.strState)
                 dispatch('readyCheckin')
             })
-            // 打开 > 打开
+            // 打开时 > 打开
             state.subscriber.add('ConnectionOpened', (res) => {
                 console.log('my ConnectionOpened', res)
                 console.log('退标器状态', state.controller.strState)

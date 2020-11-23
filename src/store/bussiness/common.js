@@ -1,3 +1,5 @@
+import EventNotifiers from '@/store/bussiness/EventNotifiers'
+
 export const STATUS_KEY = 'StDeviceStatus'
 
 export const STATUS = {
@@ -37,7 +39,7 @@ export const LOGIC_NAME = {
     // 灯光
     GUIDE_LIGHTS: 'GuideLights',
     // 打印器
-    PRINTER: 'FingerPrinter',
+    PRINTER: 'ReceiptPrinter',
 }
 
 export const API = {
@@ -54,6 +56,8 @@ export const API = {
     LIGHT: 'SetGuidLigtEx',
     // 退标完成
     DONE_CHECKIN: 'HaltPrint',
+    // 打印凭条
+    PRINT: 'ExtendedPrint',
 }
 
 // 设备连接
@@ -76,4 +80,12 @@ export const confirmHealthy = async (state, name) => {
     if (ret !== STATUS.HEALTHY) {
         throw new Error(`${name}状态异常(${ret})`)
     }
+}
+
+// 消息中心初始化
+export const initSubscriber = (modules) => {
+    const listeners = controllers.map(
+        (controller) => new EventNotifiers(controller)
+    )
+    return
 }

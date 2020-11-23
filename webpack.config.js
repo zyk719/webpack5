@@ -105,7 +105,8 @@ const dynamicConfig = {
         contentBase: path.resolve(__dirname, './dist'),
         writeToDisk: false,
         overlay: true,
-        port: 7777,
+        host: '0.0.0.0',
+        port: 8080,
         proxy: {
             // 基础接口转发
             [VUE_APP_PROXY_BASE]: {
