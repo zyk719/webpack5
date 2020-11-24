@@ -1,20 +1,22 @@
 import { log } from '@/libs/treasure'
 
 const ime = {
-    state: {},
+    state: {
+        controller: {},
+    },
     getters: {},
     mutations: {
-        setIme(state, ime) {
-            state.ime = ime
+        setImeControllerSubscriber(state, controller) {
+            state.controller = controller
         },
     },
     actions: {
         // type: 'en' 'zh_py' 'zh_hwr' 'symb' 'num' 'num_s'
         showIme({ state }, type) {
-            state.ime.showInputAtCursorPos(type)
+            state.controller.showInputAtCursorPos(type)
         },
         hideIme({ state }) {
-            state.ime.close()
+            state.controller.close()
         },
     },
 }

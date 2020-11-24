@@ -80,7 +80,7 @@ function routerGuard(router) {
 
             // 连接 QWebBridge => 初始化设备控制器 => 获取 MAC 地址
             // 若管理员已登录 && 获取设备和设备盒子信息
-            store.dispatch('connectQWebBridge')
+            store.dispatch('initX')
 
             // 在用户页 && 当前页需要登录 => 退出登录 => 返回首页
             // 用户无法刷新，此操作仅在测试时生效
@@ -138,8 +138,10 @@ function routerGuard(router) {
                 // 未登录前往登录页时同步调用
                 // 0. 读卡器状态查询
                 // todo 本地开发时注释
-                const status = await store.dispatch('idcHealthy')
-                if (!status) {
+                try {
+                    await store.dispatch('isCardReaderOk')
+                } catch (e) {
+                    Message.warning('读卡器异常，本机暂时无法为您提供服务。')
                     return next('/user/crossroad')
                 }
                 // 1. 设备异常查询
@@ -206,8 +208,9 @@ function routerGuard(router) {
         const loginAndToSupply =
             loginStatus === USER_LOGIN_STATUS_NAME && to.path === '/user/supply'
         if (loginAndToSupply) {
-            const status = await store.dispatch('checkoutHealthy')
-            if (!status) {
+            try {
+                await store.dispatch('isCheckoutOk')
+            } catch (e) {
                 return next('/user/crossroad')
             }
         }

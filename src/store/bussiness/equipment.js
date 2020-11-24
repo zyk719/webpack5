@@ -12,41 +12,19 @@ import store from '../index'
 import { log } from '@/libs/treasure'
 import { getToken } from '@/libs/util'
 import { getEquipmentInfoCall, getBoxInfoCall } from '@/api/bussiness/equipment'
+import { WEBSOCKET_ADDRESS } from '@/config'
+import { pResRej, API } from '@/store/bussiness/common'
+import { Message } from 'view-design'
 
 /** API */
 import { login, logout } from '@/api/app/user'
 
-const API = {
-    GET_MAC: 'GetMacInfo',
-}
-
 // 初始化设备控制器
-const initEquipment = (store) => {
-    const idc = new window.ecjrjs.Idc(null, 'idc')
-    store.commit('setIdc', idc)
-    log('读卡器 >>> 初始化完成！')
-
-    const checkout = new window.ecjrjs.CheckOut(null, 'chkout')
-    store.commit('setCheckout', checkout)
-    log('出标器 >>> 初始化完成！')
-
-    const ime = window.qtObjects.ime
-    store.commit('setIme', ime)
-    log('输入法 >>> 初始化完成！')
-
-    const glt = window.qtObjects.glt
-    store.commit('setGlt', glt)
-    log('灯光组 >>> 初始化完成！')
-
-    const checkin = window.qtObjects.chkin
-    store.commit('setCheckin', checkin)
-    log('退标器 >>> 初始化完成！')
-
-    const printer = window.qtObjects.rec
-    store.commit('setPrinterController', printer)
-    log('打印器 >>> 初始化完成！')
-
-    // more...
+const initControllers = () => {
+    //
+    // Object.keys(controllers).forEach(key => {
+    //     const controller =
+    // })
 }
 
 const equipment = {
@@ -55,6 +33,11 @@ const equipment = {
          * 是否连接到 QWebBridge
          */
         connected: false,
+        /**
+         * 初始化 QWebChannel 的返回值
+         * 由 QWebBridge.exe 程序返回
+         */
+        qtObjects: {},
         /**
          * 设备信息（设备端取）：设备接口获取
          */
@@ -85,7 +68,10 @@ const equipment = {
         setConnectStatus(state, status) {
             state.connected = status
         },
-        setEquipmentBase(state, { equipmentBase }) {
+        setQtObjects(state, qtObjects) {
+            state.qtObjects = qtObjects
+        },
+        setEquipmentBase(state, equipmentBase) {
             state.equipmentBase = equipmentBase
         },
         setEquipmentInfo(state, { equipmentInfo }) {
@@ -96,18 +82,113 @@ const equipment = {
         },
     },
     actions: {
-        async connectQWebBridge({ commit, dispatch }) {
-            log('QWebBridge >>> 连接中...')
-            // 异常通过全局捕获并提示
-            await window.ecModule.init(window) /* 连接到 QWebBridge */
-            log('QWebBridge >>> 已连接！')
+        async connect({ state, commit }) {
+            const { p, res, rej } = pResRej()
 
-            window.ecModule.traceOn(window)
+            const open = () => {
+                res(socket)
+            }
+            const close = () => {
+                if (state.connected) {
+                    Message.warning('与 QWebBridge 连接断开')
+                    commit('setConnectStatus', false)
+                }
+            }
+            const error = (evt) => {
+                rej(evt)
+            }
+            const message = (evt) => {
+                log('websocket message', evt)
+            }
 
-            commit('setConnectStatus', true)
-            await dispatch('getEquipmentBase')
+            const socket = new WebSocket(WEBSOCKET_ADDRESS)
+            socket.addEventListener('open', open)
+            socket.addEventListener('close', close)
+            socket.addEventListener('error', error)
+            // socket.addEventListener('message', message)
+            return p
+        },
+        async initQWebChannel({ dispatch }, socket) {
+            const { p, res, rej } = pResRej()
 
-            initEquipment(store)
+            try {
+                new QWebChannel(socket, res)
+            } catch (e) {
+                rej(e)
+            }
+
+            return p
+        },
+        async getMac({ state }) {
+            const { p, res, rej } = pResRej()
+
+            try {
+                state.qtObjects.common[API.GET_MAC](res)
+            } catch (e) {
+                rej(e)
+            }
+
+            return p
+        },
+        setController({ state, commit }) {
+            const controllers = {
+                // 读卡器
+                CardReader: 'idc',
+                // // 领标器
+                Checkout: 'chkout',
+                // // 退标器
+                // Checkin: 'chkin',
+                // // 指示灯
+                GuideLight: 'glt',
+                // // 打印器
+                // Printer: 'rec',
+                // // 输入法
+                Ime: 'ime',
+            }
+            Object.keys(controllers).forEach((key) => {
+                const controller = state.qtObjects[controllers[key]]
+                const type = `set${key}ControllerSubscriber`
+                commit(type, controller)
+            })
+        },
+        async initX({ dispatch, commit }) {
+            /** 1. websocket */
+            let socket
+            try {
+                socket = await dispatch('connect')
+                log('QWebBridge 已连接')
+            } catch (e) {
+                Message.error('QWebBridge 连接失败')
+                console.error('QWebBridge 连接失败', e)
+                return
+            }
+
+            /** 2. QWebChannel */
+            try {
+                const { objects } = await dispatch('initQWebChannel', socket)
+                commit('setConnectStatus', true)
+                commit('setQtObjects', objects)
+                log('QWebChannel 初始化完成')
+            } catch (e) {
+                Message.error('QWebChannel 初始化失败')
+                console.error('QWebChannel 初始化失败', e)
+                return
+            }
+
+            /** 3. mac */
+            try {
+                const macInfo = await dispatch('getMac')
+                const mac = JSON.parse(macInfo)['MACINFO'][0]['MACADDRESS']
+                commit('setEquipmentBase', { mac })
+                log('Mac 获取完成')
+            } catch (e) {
+                Message.error('Mac 获取失败')
+                console.error('Mac 获取失败', e)
+                return
+            }
+
+            /** 4. controller */
+            dispatch('setController')
         },
         async getEquipmentBase({ commit, dispatch }) {
             const equipmentBase = await new Promise((resolve) => {
@@ -118,10 +199,7 @@ const equipment = {
             })
             log('MAC >>> 已返回！')
 
-            commit({
-                type: 'setEquipmentBase',
-                equipmentBase,
-            })
+            commit('setEquipmentBase', equipmentBase)
 
             // 管理员已登录时调用用户信息和盒子信息
             if (getToken() === 'adminLogin') {

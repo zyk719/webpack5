@@ -19,7 +19,7 @@
                         </span>
                     </div>
                 </div>
-                <div class="flex-ac-fs" style="margin-top: 80px;">
+                <div class="flex-ac-fs" style="margin-top: 80px">
                     <div class="flex-ac-js">
                         <span class="title">申领：</span>
                     </div>
@@ -38,7 +38,7 @@
                         <span class="interval">x</span>
                         <Form :model="params" ref="form">
                             <FormItem
-                                style="margin-bottom: 0;"
+                                style="margin-bottom: 0"
                                 prop="apply_num"
                                 :rules="signNumberRule"
                             >
@@ -66,16 +66,16 @@
             </div>
             <div v-show="status.confirm">
                 <div class="title flex-ac-fs">
-                    <span style="font-weight: bold;padding-right: 5px;">
+                    <span style="font-weight: bold; padding-right: 5px">
                         {{ info.grower_name }}
                     </span>
                     先生，茶农编号
-                    <span style="font-weight: bold;padding-left: 5px;">
+                    <span style="font-weight: bold; padding-left: 5px">
                         {{ info.grower_code }}
                     </span>
                     ，您好，请核对申领信息：
                 </div>
-                <div class="flex-ac-fs" style="margin-top: 60px;">
+                <div class="flex-ac-fs" style="margin-top: 60px">
                     <span class="title">申领量：</span>
                     <span class="boldFont">{{ params.specifications }}克</span>
                     <span class="interval">x</span>
@@ -85,14 +85,14 @@
                         {{ params.apply_num * Number(params.specifications) }}克
                     </span>
                 </div>
-                <div class="flex-ac-fs" style="margin-top: 40px;">
+                <div class="flex-ac-fs" style="margin-top: 40px">
                     <span class="title">剩余量：</span>
                     <span class="boldFont">
                         {{
                             (info.valid_amount -
                                 params.apply_num *
                                     Number(params.specifications)) /
-                                1000
+                            1000
                         }}千克
                     </span>
                 </div>
@@ -105,8 +105,8 @@
                         src="./happy.svg"
                         alt="icon"
                     />
-                    <div style="height: 170px;margin-left: 60px;">
-                        <div class="title" style="line-height: 85px;">
+                    <div style="height: 170px; margin-left: 60px">
+                        <div class="title" style="line-height: 85px">
                             您已成功申领:
                             <span class="boldFont">
                                 {{ params.specifications }}克
@@ -119,12 +119,12 @@
                             <span class="boldFont">
                                 {{
                                     params.apply_num *
-                                        Number(params.specifications)
+                                    Number(params.specifications)
                                 }}克
                             </span>
                             茶标
                         </div>
-                        <div class="title" style="line-height: 85px;">
+                        <div class="title" style="line-height: 85px">
                             当前账户剩余:
                             <span class="boldFont">
                                 {{ info.valid_amount / 1000 }}千克
@@ -134,21 +134,21 @@
                     </div>
                 </div>
             </div>
-            <div v-show="status.failed" style="margin-top: 60px;">
+            <div v-show="status.failed" style="margin-top: 60px">
                 <div class="flex-center">
                     <img width="170" height="170" src="./sad.svg" alt="icon" />
-                    <div style="height: 170px;margin-left: 60px;">
-                        <div class="title" style="line-height: 85px;">
+                    <div style="height: 170px; margin-left: 60px">
+                        <div class="title" style="line-height: 85px">
                             很抱歉，本机器茶标不足。
                         </div>
-                        <div class="title" style="line-height: 85px;">
+                        <div class="title" style="line-height: 85px">
                             请您使用其他站点机器。
                         </div>
                     </div>
                 </div>
             </div>
         </div>
-        <div style="text-align: center;">
+        <div style="text-align: center">
             <AioBtn :cancel="true" :disabled="loading" @click="handleBack">
                 返回首页
             </AioBtn>
@@ -189,6 +189,7 @@ import AioBtn from '@/views/components/AioBtn'
 
 import { getBoxCall, putTakeCall } from '@/api/bussiness/user'
 import { log } from '@/libs/treasure'
+import store from '@/store'
 
 const defaultParams = () => ({
     specifications: undefined,
@@ -322,7 +323,9 @@ export default {
         /** 流程控制 */
         // 控制状态流
         statusTransfer(target) {
-            Object.keys(this.status).forEach(key => (this.status[key] = false))
+            Object.keys(this.status).forEach(
+                (key) => (this.status[key] = false)
+            )
             this.status[target] = true
         },
         async confirm() {
@@ -346,8 +349,9 @@ export default {
         },
         async submitSupply() {
             // 领标器状态检查
-            const status = await this.$store.dispatch('checkoutHealthy')
-            if (!status) {
+            try {
+                await store.dispatch('isCheckoutOk')
+            } catch (e) {
                 return this.$router.push('/user/crossroad')
             }
 
@@ -424,7 +428,7 @@ export default {
         /** 接口调用 */
         // 0. 字典表
         getSysDd() {
-            Object.values(this.ddKeys).forEach(key =>
+            Object.values(this.ddKeys).forEach((key) =>
                 this.$store.dispatch('suitSysDd', key)
             )
         },

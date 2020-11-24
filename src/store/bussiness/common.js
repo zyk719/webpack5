@@ -1,4 +1,5 @@
 import EventNotifiers from '@/store/bussiness/EventNotifiers'
+import router from '@/router'
 
 export const STATUS_KEY = 'StDeviceStatus'
 
@@ -23,7 +24,7 @@ export const TIMEOUT = {
     EJECT: 1000 * 60 * 15,
     READ: 1000 * 60,
     // 领标器
-    READ_IMAGE: 1000 * 60 * 2,
+    READ_IMAGE: 1000 * 60 * 5,
     // 退标器
     CHECKIN: 1000 * 60 * 10,
 }
@@ -43,13 +44,14 @@ export const LOGIC_NAME = {
 }
 
 export const API = {
+    GET_MAC: 'GetMacInfo',
     CONNECT: 'Open',
     GET_STATE: 'GetState',
     // 领标器、退标器
     READ_IMAGE: 'ReadImage',
     // 读卡器
-    INSERT: 'Insert',
-    CANCEL_INSERT: 'CancelInsert',
+    INSERT: 'AcceptAndReadTracks',
+    CANCEL_INSERT: 'CancelAccept',
     EJECT: 'Eject',
     READ: 'ChipSendSync',
     // 灯光
@@ -58,6 +60,19 @@ export const API = {
     DONE_CHECKIN: 'HaltPrint',
     // 打印凭条
     PRINT: 'ExtendedPrint',
+}
+
+/**
+ * opened promise
+ */
+
+export const pResRej = () => {
+    let res, rej
+    const p = new Promise((resolve, reject) => {
+        res = resolve
+        rej = reject
+    })
+    return { p, res, rej }
 }
 
 // 设备连接
@@ -81,6 +96,9 @@ export const confirmHealthy = async (state, name) => {
         throw new Error(`${name}状态异常(${ret})`)
     }
 }
+
+// 返回首页
+export const backHome = () => router.replace('/user/crossroad')
 
 // 消息中心初始化
 export const initSubscriber = (modules) => {

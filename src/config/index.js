@@ -17,4 +17,7 @@ module.exports = {
 
     /** 点击进入管理界面次数 */
     CLICK_TO_ADMIN_COUNT: 5,
+
+    /** websocket address */
+    WEBSOCKET_ADDRESS: 'ws://localhost:12348',
 }

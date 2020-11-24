@@ -3,10 +3,11 @@
 /** helpers */
 import { log } from '@/libs/treasure'
 import { Message } from 'view-design'
-import { confirmOpen, confirmHealthy } from '@/store/bussiness/common'
+import { confirmOpen, confirmHealthy, pResRej } from '@/store/bussiness/common'
 
 /** constant */
 import { API, STATUS, TIMEOUT, LOGIC_NAME } from '@/store/bussiness/common'
+import EventNotifiers from '@/store/bussiness/EventNotifiers'
 
 const EQUIPMENT_NAME = '领标器'
 const xLog = log.bind(null, EQUIPMENT_NAME)
@@ -59,26 +60,100 @@ function hexCharCodeToStr(hexCharCodeStr) {
 const checkout = {
     state: {
         controller: {},
+        subscriber: {},
     },
     getters: {},
     mutations: {
-        setCheckout(state, checkout) {
-            state.controller = checkout
+        setCheckoutControllerSubscriber(state, controller) {
+            state.controller = controller
+            state.subscriber = new EventNotifiers(state.controller)
         },
     },
     actions: {
-        async checkoutHealthy({ state }) {
+        /** hardware */
+        // 打开
+        openCheckout({ state }) {
+            const { p, res, rej } = pResRej()
+
+            state.subscriber.removeAll()
+            // success
+            state.subscriber.add('OpenCompleted', res)
+            state.subscriber.add('ConnectionOpened', res)
+            // failed
+            state.subscriber.add('DeviceError', rej)
+            state.subscriber.add('FatalError', rej)
+            state.subscriber.add('Timeout', rej)
+
+            state.controller[API.CONNECT](
+                LOGIC_NAME.CHECKOUT,
+                TIMEOUT.CONNECT
+                // (ret) => xLog(ret)
+            )
+
+            return p
+        },
+        // 状态
+        takeCheckoutState({ state }) {
+            const stateJson = state.controller.strState
+
             try {
-                await confirmOpen(state, EQUIPMENT_NAME, LOGIC_NAME.CHECKOUT)
-                await confirmHealthy(state, EQUIPMENT_NAME)
-                return true
-            } catch ({ message }) {
-                Message.error({
-                    content: `${message}`,
-                    closable: true,
-                })
-                return false
+                const { StDeviceStatus } = JSON.parse(stateJson)
+
+                if (StDeviceStatus !== STATUS.HEALTHY) {
+                    return Promise.reject()
+                }
+
+                return Promise.resolve()
+            } catch (e) {
+                return Promise.reject()
             }
+        },
+        // 检查
+        async isCheckoutOk({ dispatch }) {
+            try {
+                await dispatch('openCheckout')
+                await dispatch('takeCheckoutState')
+                return Promise.resolve()
+            } catch (e) {
+                return Promise.reject()
+            }
+        },
+        // 出标
+        sendSign({ state }, params) {
+            const { p, res, rej } = pResRej()
+
+            state.subscriber.removeAll()
+            state.subscriber.add('DeviceError', (response) => {
+                console.log('DeviceError', response)
+            })
+            state.subscriber.add('FatalError', (response) => {
+                console.log('FatalError', response)
+            })
+            state.subscriber.add('Timeout', (response) => {
+                console.log('Timeout', response)
+            })
+
+            state.subscriber.add('ReadImageComplete', res)
+
+            state.subscriber.add('DataMissing', (response) => {
+                console.log('DataMissing', response)
+            })
+            state.subscriber.add('DataNotSupport', (response) => {
+                console.log('DataNotSupport', response)
+            })
+            state.subscriber.add('MediaInserted', (response) => {
+                console.log('MediaInserted', response)
+            })
+            state.subscriber.add('PrintHalted', (response) => {
+                console.log('PrintHalted', response)
+            })
+            state.subscriber.add('NoMedia', (response) => {
+                console.log('NoMedia', response)
+            })
+
+            state.controller[API.READ_IMAGE](...params)
+
+            return p
         },
         async readImage({ state, dispatch }, { box, total }) {
             /** 1. 灯光打开 */
@@ -86,27 +161,25 @@ const checkout = {
 
             /** 2. 出标 */
             const params = buildReadImageParams(box, total)
-            const { ret, param } = await state.controller[API.READ_IMAGE](
-                ...params
-            )
+            const res = await dispatch('sendSign', params)
 
             /** 1. 灯光关闭 */
             clearTimeout(openTimeId)
             setTimeout(dispatch, 1000, 'closeCheckout')
 
-            xLog('领标结束', ret, param)
-            if (ret === STATUS.READ_IMAGE_COMPLETE) {
-                const resJson = hexCharCodeToStr(param[0])
-                const { barcode } = JSON.parse(resJson)
-                const sign = barcode.map(url => url.split('?code=')[1])
-                return sign
-            }
+            xLog('领标结束', res)
+            // todo 解析异常
+            const resJson = hexCharCodeToStr(res)
+            const { barcode } = JSON.parse(resJson)
+            let sign = barcode.map((url) => url.split('?code=')[1])
+            sign = [...new Set(sign)]
+            return sign
 
             // 尝试解析返回值
             try {
                 const resJson = hexCharCodeToStr(param[0])
                 const { barcode } = JSON.parse(resJson)
-                const sign = barcode.map(url => url.split('?code=')[1])
+                const sign = barcode.map((url) => url.split('?code=')[1])
                 return sign
             } catch (e) {
                 return []

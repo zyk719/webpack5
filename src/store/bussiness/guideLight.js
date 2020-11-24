@@ -25,7 +25,7 @@ const guideLight = {
     },
     getters: {},
     mutations: {
-        setGlt(state, controller) {
+        setGuideLightControllerSubscriber(state, controller) {
             state.controller = controller
         },
     },
@@ -35,8 +35,7 @@ const guideLight = {
             state.controller[API.CONNECT](
                 LOGIC_NAME.GUIDE_LIGHTS,
                 TIMEOUT.CONNECT,
-                (res, a, b, c) => {
-                    console.log('返回值', res, a, b, c)
+                (res) => {
                     if (res !== '0') {
                         return
                     }
