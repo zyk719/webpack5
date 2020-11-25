@@ -29,12 +29,9 @@ const returnBox = {
         },
     },
     mutations: {
-        setCheckin(state, controller) {
+        setCheckinControllerSubscriber(state, controller) {
             state.controller = controller
-            // 初始化回调订阅
-            setTimeout(() => {
-                state.subscriber = new EventNotifiers(state.controller)
-            }, 2000)
+            state.subscriber = new EventNotifiers(state.controller)
         },
         removeAll(state) {
             state.subscriber.removeAll()

@@ -4,7 +4,7 @@
 import { log } from '@/libs/treasure'
 import { Message } from 'view-design'
 import EventNotifiers from '@/store/bussiness/EventNotifiers'
-import { API, LOGIC_NAME, TIMEOUT } from '@/store/bussiness/common'
+import { API, LOGIC_NAME, pResRej, TIMEOUT } from '@/store/bussiness/common'
 import { STATUS } from '@/store/bussiness/common'
 
 const EQUIPMENT_NAME = '打印模块'
@@ -16,76 +16,80 @@ const printer = {
         subscriber: {},
     },
     getters: {},
+    mutations: {
+        setPrinterControllerSubscriber(state, controller) {
+            state.controller = controller
+            state.subscriber = new EventNotifiers(state.controller)
+        },
+    },
     actions: {
+        /** hardware */
+        // 打开
         openPrinter({ state }) {
-            let resolve, reject
-            const openRes = new Promise((res, rej) => {
-                resolve = res
-                reject = rej
-            })
+            const { p, res, rej } = pResRej()
 
-            // 连接成功
-            const openSuccess = (res) => {
-                resolve(res)
-            }
-
-            // 连接失败
-            const openFailed = (res) => {
-                reject(res)
-            }
-
-            // 注册事件
             state.subscriber.removeAll()
-            state.subscriber.add('OpenCompleted', openSuccess)
-            state.subscriber.add('ConnectionOpened', openSuccess)
-            state.subscriber.add('FatalError', openFailed)
-            state.subscriber.add('Timeout', openFailed)
-            state.subscriber.add('DeviceError', openFailed)
+            // success
+            state.subscriber.add('OpenCompleted', res)
+            state.subscriber.add('ConnectionOpened', res)
+            // failed
+            state.subscriber.add('DeviceError', rej)
+            state.subscriber.add('FatalError', rej)
+            state.subscriber.add('Timeout', rej)
 
-            // 执行
             state.controller[API.CONNECT](
                 LOGIC_NAME.PRINTER,
-                TIMEOUT.CONNECT,
-                (ret) => xLog(ret)
+                TIMEOUT.CONNECT
+                // (ret) => xLog(ret)
             )
 
-            return openRes
+            return p
         },
-        getPrinterState({ state }) {
+        // 状态
+        takePrinterState({ state }) {
             const stateJson = state.controller.strState
 
             try {
                 const { StDeviceStatus } = JSON.parse(stateJson)
-                return StDeviceStatus === STATUS.HEALTHY
+
+                if (StDeviceStatus !== STATUS.HEALTHY) {
+                    return Promise.reject()
+                }
+
+                return Promise.resolve()
             } catch (e) {
-                return false
+                return Promise.reject()
             }
         },
-        print({ state }, text) {
-            let resolve, reject
-            const printRes = new Promise((res, rej) => {
-                resolve = res
-                reject = rej
-            })
-
-            const printSuccess = (res) => {
-                xLog(res)
-                Message.success('凭条打印完成，请取走您的凭条')
+        // 检查
+        async isPrinterOk({ dispatch }) {
+            try {
+                await dispatch('openPrinter')
+                await dispatch('takePrinterState')
+                return Promise.resolve()
+            } catch (e) {
+                return Promise.reject(e)
             }
-
-            const printFailed = (res) => {}
+        },
+        // 打印
+        print({ state, dispatch }, text) {
+            const { p, res, rej } = pResRej()
 
             state.subscriber.removeAll()
-            state.subscriber.add('PrintComplete', printSuccess)
-            state.subscriber.add('DeviceError', printFailed)
-            state.subscriber.add('FatalError', printFailed)
-            state.subscriber.add('InvalidPrintData', printFailed)
+            state.subscriber.add('PrintComplete', () => res('打印完成'))
+            state.subscriber.add('DeviceError', () => rej('DeviceError'))
+            state.subscriber.add('FatalError', () => rej('FatalError'))
+            state.subscriber.add('InvalidPrintData', () =>
+                rej('InvalidPrintData')
+            )
 
             const params = [
                 // FormName
                 'ReceiptForm',
                 // FieldValues
-                'R10=<凭证>,R11=<内容一>,R12=<内容二>',
+                `R10=<${text.title || ''}>,R11=<${text.time || ''}>,R12=<${
+                    text.content || ''
+                }>`,
                 // MediaName
                 'ReceiptMedia',
                 // Alignment
@@ -99,21 +103,29 @@ const printer = {
             ]
             state.controller[API.PRINT](...params)
 
-            return printRes
+            return p
         },
-        doPrinter() {},
-    },
-    mutations: {
-        setPrinterController(state, printer) {
-            state.controller = printer
+        async doPrint({ dispatch }, text) {
+            const { p, res, rej } = pResRej()
 
-            // 消息中心初始化 todo 同步调用会导致软件异常
-            setTimeout(() => {
-                state.subscriber = new EventNotifiers(state.controller)
-            }, 2000)
-        },
-        setPrinterSubscriber(state, subscriber) {
-            state.subscriber = subscriber
+            /** 设备检查 */
+            try {
+                await dispatch('isPrinterOk')
+            } catch (e) {
+                Message.error(`凭条打印机异常 ${e}`)
+                rej()
+            }
+
+            /** 打印 */
+            try {
+                const response = await dispatch('print', text)
+                res(response)
+            } catch (e) {
+                Message.error(`凭条打印时发生异常 ${e}`)
+                rej()
+            }
+
+            return p
         },
     },
 }

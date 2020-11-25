@@ -4,6 +4,7 @@
 import { log } from '@/libs/treasure'
 import { Message } from 'view-design'
 import { confirmOpen, confirmHealthy, pResRej } from '@/store/bussiness/common'
+import { hex2Str } from '@/libs/treasure'
 
 /** constant */
 import { API, STATUS, TIMEOUT, LOGIC_NAME } from '@/store/bussiness/common'
@@ -39,22 +40,6 @@ function buildReadImageParams(box, total) {
         // timeout
         TIMEOUT.READ_IMAGE,
     ]
-}
-
-function hexCharCodeToStr(hexCharCodeStr) {
-    let hex = hexCharCodeStr.trim()
-    hex = hex.startsWith('0x') ? hex.substr(2) : hex
-    // 需要被 2 整除，否则不合法
-    if (hex.length % 2 !== 0) {
-        return console.error('返回十六进制不合法')
-    }
-    let str = ''
-    while (hex.length) {
-        const spoon = parseInt(hex.substr(0, 2), 16)
-        str += String.fromCodePoint(spoon)
-        hex = hex.substr(2)
-    }
-    return str
 }
 
 const checkout = {
@@ -165,25 +150,13 @@ const checkout = {
 
             /** 1. 灯光关闭 */
             clearTimeout(openTimeId)
-            setTimeout(dispatch, 1000, 'closeCheckout')
+            setTimeout(dispatch, 1000, 'closeCheckoutLight')
 
-            xLog('领标结束', res)
-            // todo 解析异常
-            const resJson = hexCharCodeToStr(res)
+            const resJson = hex2Str(res)
             const { barcode } = JSON.parse(resJson)
             let sign = barcode.map((url) => url.split('?code=')[1])
             sign = [...new Set(sign)]
             return sign
-
-            // 尝试解析返回值
-            try {
-                const resJson = hexCharCodeToStr(param[0])
-                const { barcode } = JSON.parse(resJson)
-                const sign = barcode.map((url) => url.split('?code=')[1])
-                return sign
-            } catch (e) {
-                return []
-            }
         },
     },
 }

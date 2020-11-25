@@ -211,6 +211,7 @@ function routerGuard(router) {
             try {
                 await store.dispatch('isCheckoutOk')
             } catch (e) {
+                Message.error('领标器异常')
                 return next('/user/crossroad')
             }
         }

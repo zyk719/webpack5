@@ -84,6 +84,7 @@
 <script>
 import UserAuthTitle from '@/views/components/UserAuthTitle'
 import AioBtn from '@/views/components/AioBtn'
+import { speakMsg } from '@/libs/treasure'
 
 export default {
     name: 'AuthNumber',
@@ -103,11 +104,41 @@ export default {
         },
         // 凭条打印
         async handlePrint() {
-            const res = await this.$store.dispatch('openPrinter')
-            console.log('open print back', res)
-            const status = await this.$store.dispatch('getPrinterState')
-            console.log('printer status', status)
-            await this.$store.dispatch('print')
+            try {
+                // todo 打印内容
+                this.$store.dispatch('lightPrinter')
+                const res = await this.$store.dispatch('doPrint', {
+                    title: `${this.info.grower_name}标量信息`,
+                    time: `打印时间：2020/11/25`,
+                    content: `
+                        核准量：${
+                            this.userCurrentNumber.all_amount / 1000 || 0
+                        }千克,
+                        划转量：${
+                            this.userCurrentNumber.transfer_amount / 1000 || 0
+                        }千克,
+                        申领量：${
+                            this.userCurrentNumber.entity_valid_amount / 1000 ||
+                            0
+                        }千克,
+                        剩余量：${
+                            this.userCurrentNumber.remaining_amount / 1000 || 0
+                        }千克（含冻结量：${
+                        this.userCurrentNumber.freeze_amount / 1000 || 0
+                    }千克）,
+                        茶地面积：${this.userCurrentNumber.tea_area || 0}亩,
+                    `,
+                })
+                speakMsg('success', `${res}，请取走凭条`)
+                // todo 打印全局控制
+                // todo 检查打印机状态，不能用时置灰按钮
+            } catch (e) {
+                console.error(e)
+            } finally {
+                setTimeout(() => {
+                    this.$store.dispatch('closePrinterLight')
+                }, 1000)
+            }
         },
     },
     mounted() {

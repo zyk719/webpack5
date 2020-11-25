@@ -17,6 +17,7 @@ const EQUIPMENT = {
     IDC: 'ENVDEPOSITORY',
     CHECKOUT: 'COINACCEPTOR',
     CHECKIN: 'SCANNER',
+    PRINTER: 'RECEIPTPRINTER',
 }
 
 const guideLight = {
@@ -60,7 +61,7 @@ const guideLight = {
                 equipment: EQUIPMENT.CHECKOUT,
             })
         },
-        closeCheckout({ dispatch }) {
+        closeCheckoutLight({ dispatch }) {
             dispatch('setLight', {
                 equipment: EQUIPMENT.CHECKOUT,
                 action: LIGHT_ACTIONS.OFF,
@@ -74,6 +75,17 @@ const guideLight = {
         closeCheckin({ dispatch }) {
             dispatch('setLight', {
                 equipment: EQUIPMENT.CHECKIN,
+                action: LIGHT_ACTIONS.OFF,
+            })
+        },
+        lightPrinter({ dispatch }) {
+            dispatch('setLight', {
+                equipment: EQUIPMENT.PRINTER,
+            })
+        },
+        closePrinterLight({ dispatch }) {
+            dispatch('setLight', {
+                equipment: EQUIPMENT.PRINTER,
                 action: LIGHT_ACTIONS.OFF,
             })
         },

@@ -3,6 +3,7 @@
  */
 import SparkMD5 from 'spark-md5'
 import Axios from 'axios'
+import { Message } from 'view-design'
 
 /**
  * @type {any|(function(...[*]=))}
@@ -25,28 +26,28 @@ export const isDev = process.env.NODE_ENV === 'development'
  * @param fn
  * @returns {boolean}
  */
-export const isFn = fn =>
+export const isFn = (fn) =>
     Object.prototype.toString.call(fn) === '[object Function]'
 
 /**
  * @param o
  * @returns {boolean}
  */
-export const isObj = o =>
+export const isObj = (o) =>
     Object.prototype.toString.call(o) === '[object Object]'
 
 /**
  * @param arr
  * @returns {boolean}
  */
-export const isArr = arr =>
+export const isArr = (arr) =>
     Object.prototype.toString.call(arr) === '[object Array]'
 
 /**
  * @param blob
  * @returns {boolean}
  */
-export const isBlob = blob =>
+export const isBlob = (blob) =>
     Object.prototype.toString.call(blob) === '[object Blob]'
 
 /**
@@ -131,7 +132,7 @@ export function fileMD5(file) {
  */
 export function createFormData(o, name = 'blob') {
     const formData = new FormData()
-    Object.keys(o).forEach(key => {
+    Object.keys(o).forEach((key) => {
         if (key === 'file') {
             const b = o[key]
             // append 会把 Blob 包装成 File
@@ -190,7 +191,7 @@ export function aNob(aArr, bArr) {
  * @param hex
  * @returns {string|*}
  */
-export const hex2Str = hex => {
+export const hex2Str = (hex) => {
     // 0. valid
     if (hex.length % 2 !== 0) {
         console.error('非法的 hex')
@@ -216,4 +217,14 @@ export const hex2Str = hex => {
     const string = String.fromCodePoint(...points)
 
     return string
+}
+
+/**
+ * speak
+ * @param text
+ */
+export const speakMsg = (msgType, text) => {
+    Message[msgType](text)
+    const speechInstance = new SpeechSynthesisUtterance(text)
+    speechSynthesis.speak(speechInstance)
 }

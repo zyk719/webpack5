@@ -137,11 +137,11 @@ const equipment = {
                 // // 领标器
                 Checkout: 'chkout',
                 // // 退标器
-                // Checkin: 'chkin',
+                Checkin: 'chkin',
                 // // 指示灯
                 GuideLight: 'glt',
                 // // 打印器
-                // Printer: 'rec',
+                Printer: 'rec',
                 // // 输入法
                 Ime: 'ime',
             }

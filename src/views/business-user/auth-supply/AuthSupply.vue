@@ -170,6 +170,10 @@
             >
                 确认申领
             </AioBtn>
+            <!-- 打印凭证 -->
+            <AioBtn v-show="status.success && !printed" @click="handlePrint">
+                凭条打印
+            </AioBtn>
             <!-- 出标时茶农卡被取走，不能再领取下一笔 -->
             <AioBtn
                 v-show="status.success && !takenCardCheckout"
@@ -188,7 +192,7 @@ import AioInputNumber from '@/views/components/AioInputNumber'
 import AioBtn from '@/views/components/AioBtn'
 
 import { getBoxCall, putTakeCall } from '@/api/bussiness/user'
-import { log } from '@/libs/treasure'
+import { log, speakMsg } from '@/libs/treasure'
 import store from '@/store'
 
 const defaultParams = () => ({
@@ -238,6 +242,7 @@ export default {
                     trigger: 'change',
                 },
             ],
+            printed: false,
         }
     },
     computed: {
@@ -293,15 +298,6 @@ export default {
             const realMax = Math.floor(this.info.valid_amount / Number(specs))
             return realMax
         },
-        // 检查仓门是否关闭
-        isDoorClose() {
-            // todo
-            const r = true
-            if (!r) {
-                this.$Message.warning('仓门未关闭，请关闭！')
-            }
-            return r
-        },
         // 输入法打开
         showIme() {
             this.$store.dispatch('showIme', 'num_s')
@@ -312,6 +308,21 @@ export default {
         },
 
         /** 用户事件 */
+        async handlePrint() {
+            this.printed = true
+            const { specifications, apply_num } = this.params
+            // 数量、时间、订单号、标题
+            const res = await this.$store.dispatch('doPrint', {
+                title: '领标凭条',
+                time: '2020/11/25',
+                content: `
+                    规格：${specifications}
+                    标量：${apply_num}
+                    总量：${apply_num * Number(specifications)}克
+                `,
+            })
+            speakMsg('success', `${res}，请取走凭条`)
+        },
         handleBack() {
             if (this.takenCardCheckout) {
                 this.$store.dispatch('takeIcCardCb')
@@ -348,70 +359,96 @@ export default {
             this.statusTransfer('fill')
         },
         async submitSupply() {
-            // 领标器状态检查
+            /** 1. 领标器状态检查 */
             try {
                 await store.dispatch('isCheckoutOk')
             } catch (e) {
+                this.$Message.error('领标器异常')
                 return this.$router.push('/user/crossroad')
             }
 
-            // 仓门关闭检查
-            if (!this.isDoorClose()) {
-                return
-            }
+            /** 2. todo 仓门关闭检查并吸住 */
 
-            const equ_user_code = this.$store.state.customer.code
-            const msg = this.$Message.loading({
-                content: '正在出标中，在完成前请不要打开仓门！',
-                duration: 0,
-            })
+            /** 3. 打开屏幕禁止 */
             this.$store.commit('setCheckoutLoading', true)
 
+            /** 4. 请求可出标盒子信息 */
+            let boxInfo
             try {
-                // 1. 请求出标盒子信息
-                const params = { ...this.params }
-                params.equ_user_code = equ_user_code
-                const {
-                    obj: {
-                        apply_id,
-                        boxInfo: [{ equipmentbox_id, box_code }],
-                    },
-                } = await getBoxCall(params)
-
-                // 2. 用盒子信息调用设备出标
-                const sign = await this.$store.dispatch('readImage', {
-                    box: box_code,
-                    total: params.apply_num,
-                })
-                const mark_codes = sign.join(';')
-
-                // 3. 提交出标信息 todo 需测试未提交，用户就取卡导致的问题
-                const paramsPut = {
-                    apply_id,
-                    equ_user_code,
-                    detail_json: [{ equipmentbox_id, mark_codes }],
-                }
-                await putTakeCall(paramsPut)
-
-                // 4. 更新茶农信息（包含机器剩余标信息）、取标成功提示
-                this.$store.dispatch('getUserInfo', equ_user_code)
-
-                this.statusTransfer('success')
-
-                this.$Message.success(
-                    '您的茶标已完成出标，请打开仓门领取并核对数量。'
-                )
-                setTimeout(
-                    this.$Message.info.bind(this.$Message),
-                    1000 * 7,
-                    '茶标领取完成后请关闭仓门'
-                )
+                boxInfo = await this.getBoxInfo()
             } catch (e) {
-                log(e)
+                // 请求出标盒子时发生异常：
+                // 0. 关闭屏幕禁止
+                // 1. 提示客户重试
+                this.$store.commit('setCheckoutLoading', false)
+                this.$Message.warning(
+                    '请求出标信息时发生异常，可点击确认申领按钮重试。'
+                )
+                return
+            }
+            const { apply_id, equipmentbox_id, box_code } = boxInfo
+
+            /** 接口完成后，茶农申请的茶标量已被冻结 */
+
+            /** 5. 调用设备出标 */
+            let checkoutMsg, sign
+            try {
+                checkoutMsg = this.$Message.loading({
+                    content: '正在出标，结束前请勿打开仓门！',
+                    duration: 0,
+                })
+                sign = await this.$store.dispatch('readImage', {
+                    box: box_code,
+                    total: this.params.apply_num,
+                })
+            } catch (e) {
+                // todo 会发生出了部分标后机器报异常的情况吗？
+                // todo 手动告诉服务器机器故障了，上报模块状态
+
+                // todo 给客户打印异常凭证：单号、申领数量
+                this.$Message.error('领标器异常')
+                // 返回首页
+                return this.$router.push('/user/crossroad')
             } finally {
-                msg()
+                checkoutMsg()
+            }
+
+            /** 将机器的出标标号提交给服务器 */
+            try {
+                await this.putSign(apply_id, equipmentbox_id, sign)
+            } catch (e) {
+                // 接口报异常即机器故障
+                // todo 机器门被强拉开标被取走
+
+                // todo 给客户打印异常凭证：单号、申领数量
+                this.$Message.error('标号上报异常')
+                // 返回首页
+                return this.$router.push('/user/crossroad')
+            } finally {
                 this.$store.commit('setCheckoutLoading', false)
             }
+
+            /** 提示取标 */
+            speakMsg(
+                'success',
+                '您的茶标已完成出标，请打开仓门领取并核对数量。'
+            )
+
+            /** todo 开门 */
+
+            /** 7秒后语音提示关闭仓门 */
+            setTimeout(() => {
+                speakMsg('info', '茶标领取完成后请关闭仓门')
+            }, 1000 * 7)
+
+            /** 更新茶农标量数据 */
+            await this.$store.dispatch(
+                'getUserInfo',
+                this.$store.state.customer.code
+            )
+
+            /** 页面切换 */
+            this.statusTransfer('success')
         },
         refill() {
             this.statusTransfer('fill')
@@ -419,6 +456,8 @@ export default {
             this.params = defaultParams()
             // 填充第一个规格
             this.fillFirstSpecs()
+            // 清空凭条打印记录
+            this.printed = false
         },
         askHelp() {
             this.$Message.warning('')
@@ -431,6 +470,28 @@ export default {
             Object.values(this.ddKeys).forEach((key) =>
                 this.$store.dispatch('suitSysDd', key)
             )
+        },
+        // 1. 请求出标盒子信息
+        async getBoxInfo() {
+            const params = { ...this.params }
+            params.equ_user_code = this.$store.state.customer.code
+            const {
+                obj: {
+                    apply_id,
+                    boxInfo: [{ equipmentbox_id, box_code }],
+                },
+            } = await getBoxCall(params)
+            return { apply_id, equipmentbox_id, box_code }
+        },
+        // 2. 提交出标信息
+        async putSign(apply_id, equipmentbox_id, sign) {
+            const mark_codes = sign.join(';')
+            const params = {
+                apply_id,
+                equ_user_code: this.$store.state.customer.code,
+                detail_json: [{ equipmentbox_id, mark_codes }],
+            }
+            await putTakeCall(params)
         },
     },
 }
