@@ -130,26 +130,33 @@ const equipment = {
 
             return p
         },
-        setController({ state, commit }) {
+        setController({ state, commit, dispatch }) {
             const controllers = {
                 // 读卡器
                 CardReader: 'idc',
-                // // 领标器
+                // 领标器
                 Checkout: 'chkout',
-                // // 退标器
+                // 退标器
                 Checkin: 'chkin',
-                // // 指示灯
+                // 指示灯
                 GuideLight: 'glt',
-                // // 打印器
+                // 打印器
                 Printer: 'rec',
-                // // 输入法
+                // 输入法
                 Ime: 'ime',
+                // 感应器
+                Sensor: 'snr',
             }
             Object.keys(controllers).forEach((key) => {
                 const controller = state.qtObjects[controllers[key]]
                 const type = `set${key}ControllerSubscriber`
                 commit(type, controller)
             })
+
+            // 感应器开始监听
+            setTimeout(() => {
+                dispatch('startSensor')
+            }, 2000)
         },
         async initX({ dispatch, commit }) {
             /** 1. websocket */

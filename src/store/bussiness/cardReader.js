@@ -2,7 +2,7 @@
 import router from '@/router'
 
 /** helpers */
-import { log } from '@/libs/treasure'
+import { log, speakMsg } from '@/libs/treasure'
 import { Message } from 'view-design'
 import { setToken } from '@/libs/util'
 import EventNotifiers from '@/store/bussiness/EventNotifiers'
@@ -47,7 +47,6 @@ const cardReader = {
         info: {},
         checkoutLoading: false,
         takenCardCheckout: false,
-        // todo 退标状态
         checkinLoading: false,
         takenCardCheckin: false,
         fromPath: '',
@@ -259,11 +258,16 @@ const cardReader = {
             // 发标过程中取走茶农卡
             if (state.checkoutLoading) {
                 commit('setTakenCardCheckout', true)
-                Message.error('在发标过程中茶农卡被取走')
+                speakMsg('error', '在领标过程中茶农卡被取走')
                 return
             }
 
-            // todo 退标过程中取走茶农卡
+            // 退标过程中取走茶农卡
+            if (state.checkinLoading) {
+                commit('setTakenCardCheckin', true)
+                speakMsg('error', '在退标过程中茶农卡被取走')
+                return
+            }
 
             router.push('/user/crossroad')
             dispatch('userLogout')
@@ -288,10 +292,15 @@ const cardReader = {
                     code: equ_user_code,
                 })
 
-                // 获取茶农标量
+                /** 缓存信息获取 */
+                // 0. 获取茶农标量
                 dispatch('getUserCurrentNumber')
+                // 1. 获取签名数据
+                dispatch('getSignStatus')
+                // 2. 获取领和退开放状态
+                dispatch('getCheckoutCheckinStatus')
 
-                // 获取茶农信息
+                /** 获取茶农信息 */
                 dispatch('getUserInfo', equ_user_code)
 
                 // 登录操作时，跳转且提示

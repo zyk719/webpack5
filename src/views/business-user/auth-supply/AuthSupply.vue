@@ -147,6 +147,16 @@
                     </div>
                 </div>
             </div>
+            <div v-show="status.forbid">
+                <div class="flex-center">
+                    <img width="170" height="170" src="./sad.svg" alt="icon" />
+                    <div style="height: 170px; margin-left: 60px">
+                        <div class="title" style="line-height: 170px">
+                            未开放申领！
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
         <div style="text-align: center">
             <AioBtn :cancel="true" :disabled="loading" @click="handleBack">
@@ -181,7 +191,6 @@
             >
                 再领一笔
             </AioBtn>
-            <AioBtn v-show="status.failed" @click="askHelp">联系客服</AioBtn>
         </div>
     </div>
 </template>
@@ -215,6 +224,7 @@ export default {
                 confirm: false,
                 success: false,
                 failed: false,
+                forbid: false,
             },
             params: defaultParams(),
             signNumberRule: [
@@ -266,6 +276,21 @@ export default {
         info(nv) {
             Object.keys(nv).length > 0 && this.fillFirstSpecs()
         },
+        // 监听是否可申领
+        '$store.state.cache.isOpen.is_can_apply_grower': {
+            handler(nv) {
+                console.log('in watch', nv)
+                const forbid = nv === '2'
+                if (forbid) {
+                    this.statusTransfer('forbid')
+                }
+                const canSupply = nv === '1'
+                if (canSupply) {
+                    this.statusTransfer('fill')
+                }
+            },
+            immediate: true,
+        },
     },
     mounted() {
         this.init()
@@ -274,6 +299,8 @@ export default {
         init() {
             this.getSysDd()
             Object.keys(this.info).length > 0 && this.fillFirstSpecs()
+            // 重新查询茶农申领退状态
+            this.$store.dispatch('getCheckoutCheckinStatus')
         },
 
         /** helpers */
@@ -413,7 +440,7 @@ export default {
                 checkoutMsg()
             }
 
-            /** 将机器的出标标号提交给服务器 */
+            /** 将机器的出标标号提交给服务器 todo 导去异常页 */
             try {
                 await this.putSign(apply_id, equipmentbox_id, sign)
             } catch (e) {
@@ -458,10 +485,6 @@ export default {
             this.fillFirstSpecs()
             // 清空凭条打印记录
             this.printed = false
-        },
-        askHelp() {
-            this.$Message.warning('')
-            this.handleBack()
         },
 
         /** 接口调用 */

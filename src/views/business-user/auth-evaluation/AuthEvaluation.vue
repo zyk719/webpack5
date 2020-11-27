@@ -1,29 +1,29 @@
 <template>
     <div class="evaluation flex-column">
-        <TopBar style="flex: 0 0 154px;" @onClick="handleBack">订单评价</TopBar>
+        <TopBar style="flex: 0 0 154px" @onClick="handleBack">订单评价</TopBar>
         <div v-show="!isEvaluation" class="main">
             <div class="cell flex-ac-js" v-for="(item, idx) in list" :key="idx">
                 <div class="idx flex-center">
                     {{ (page - 1) * 5 + idx + 1 }}
                 </div>
                 <div class="text">
-                    <div style="line-height: 50px;">
-                        <span class="text-overflow" style="width: 36%;">
+                    <div style="line-height: 50px" class="flex-center">
+                        <span class="text-overflow" style="width: 36%">
                             订单编号：{{ item['apply_code'] }}
                         </span>
-                        <span class="text-overflow" style="width: 64%;">
+                        <span class="text-overflow" style="width: 64%">
                             收购者：{{ item['enterprise_name'] }}
                         </span>
                     </div>
-                    <div style="line-height: 50px;">
-                        <span style="width: 36%;">
+                    <div style="line-height: 50px" class="flex-center">
+                        <span style="width: 36%">
                             交易时间：{{ item['create_dt'] }}
                         </span>
                         <!-- todo 收购量询问 -->
-                        <span style="width: 32%;">
+                        <span style="width: 32%">
                             收购量(克)：{{ item['standard_weight'] }}
                         </span>
-                        <span style="width: 32%;">
+                        <span style="width: 32%">
                             订单状态：{{ item['statusidname'] }}
                         </span>
                     </div>
@@ -58,7 +58,7 @@
         </div>
         <div v-show="isEvaluation" class="cur-evaluation">
             <Form
-                style="margin: 0 auto;width: 880px;"
+                style="margin: 0 auto; width: 880px"
                 label-colon
                 ref="form"
                 :label-width="166"
@@ -96,7 +96,7 @@
                     />
                     <div
                         class="flex-ac-fs"
-                        style="flex-wrap: wrap;"
+                        style="flex-wrap: wrap"
                         v-show="!evaluated"
                     >
                         <div
@@ -128,7 +128,7 @@
                         @on-blur="evaluated || hideIme()"
                     />
                 </FormItem>
-                <div style="text-align: center;">
+                <div style="text-align: center">
                     <AioBtn
                         :disabled="loading"
                         :cancel="true"
@@ -279,7 +279,7 @@ export default {
         /** 接口调用 */
         // 0. 字典表
         getSysDd() {
-            Object.values(this.ddKeys).forEach(key =>
+            Object.values(this.ddKeys).forEach((key) =>
                 this.$store.dispatch('suitSysDd', key)
             )
         },

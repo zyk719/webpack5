@@ -41,6 +41,8 @@ export const LOGIC_NAME = {
     GUIDE_LIGHTS: 'GuideLights',
     // 打印器
     PRINTER: 'ReceiptPrinter',
+    // 感应器
+    SENSOR: 'Sensors',
 }
 
 export const API = {
@@ -60,6 +62,9 @@ export const API = {
     DONE_CHECKIN: 'HaltPrint',
     // 打印凭条
     PRINT: 'ExtendedPrint',
+    // 感应器
+    START_SENSOR: 'EnableProximity',
+    STOP_SENSOR: 'DisableProximity',
 }
 
 /**

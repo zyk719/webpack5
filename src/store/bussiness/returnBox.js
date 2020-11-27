@@ -2,10 +2,17 @@
 
 /** helpers */
 import { log } from '@/libs/treasure'
+import { Message } from 'view-design'
 import EventNotifiers from '@/store/bussiness/EventNotifiers'
 
 /** constant */
-import { API, STATUS, TIMEOUT, LOGIC_NAME } from '@/store/bussiness/common'
+import {
+    API,
+    STATUS,
+    TIMEOUT,
+    LOGIC_NAME,
+    pResRej,
+} from '@/store/bussiness/common'
 
 const EQUIPMENT_NAME = '退标器'
 const xLog = log.bind(null, EQUIPMENT_NAME)
@@ -15,26 +22,13 @@ const returnBox = {
         controller: {},
         subscriber: {},
         count: 0,
-        // 退标盒打开关闭进度
-        toggleStatus: false,
         returnInfo: [],
     },
-    getters: {
-        noReturn(state) {
-            return state.returnInfo.length !== 0
-        },
-        returnSubmitInfo(state) {
-            // todo 实际需要处理
-            return state.returnInfo
-        },
-    },
+    getters: {},
     mutations: {
         setCheckinControllerSubscriber(state, controller) {
             state.controller = controller
             state.subscriber = new EventNotifiers(state.controller)
-        },
-        removeAll(state) {
-            state.subscriber.removeAll()
         },
         setCount(state, count) {
             state.count = count
@@ -44,94 +38,139 @@ const returnBox = {
         },
     },
     actions: {
-        // 使退标盒子为可退标状态（操作 | 确认）
-        readyReturnBox({ commit }) {
-            // call status api
-        },
-        // 退标盒子状态回调
-        readyReturnBoxCb({ commit }, status) {},
+        /** hardware */
+        // 打开
+        openCheckin({ state }) {
+            const { p, res, rej } = pResRej()
 
-        // 退标内容回调：获取退标的信息，主要是标号
-        returnInfoCb({ commit }, info) {
-            commit({
-                type: 'setReturnInfo',
-                info,
-            })
+            state.subscriber.removeAll()
+            // success
+            state.subscriber.add('OpenCompleted', () => xLog('OpenCompleted'))
+            state.subscriber.add('ConnectionOpened', () =>
+                xLog('ConnectionOpened')
+            )
+            // failed
+            state.subscriber.add('DeviceError', () => xLog('DeviceError'))
+            state.subscriber.add('FatalError', () => xLog('FatalError'))
+            state.subscriber.add('Timeout', () => xLog('Timeout'))
+
+            state.controller[API.CONNECT](
+                LOGIC_NAME.CHECKIN,
+                TIMEOUT.CONNECT,
+                /**
+                 * 此处回调 较 事件监听回调 靠后
+                 * 执行成功 ret 0
+                 * 执行失败 ret -1
+                 */
+                (ret) => (ret === '0' ? res() : rej())
+            )
+
+            return p
         },
-        // 打开退标器
-        readImageCheckin({ dispatch, commit, state }) {
-            commit('removeAll')
-            // 关闭时 > 打开
-            state.subscriber.add('OpenCompleted', (res) => {
-                console.log('my OpenCompleted', res)
-                console.log('退标器状态', state.controller.strState)
-                dispatch('readyCheckin')
-            })
-            // 打开时 > 打开
-            state.subscriber.add('ConnectionOpened', (res) => {
-                console.log('my ConnectionOpened', res)
-                console.log('退标器状态', state.controller.strState)
-                dispatch('readyCheckin')
-            })
-            state.subscriber.add('FatalError', (res) => {
-                console.log('my FatalError', res)
-            })
-            state.subscriber.add('Timeout', (res) => {
-                console.log('my Timeout', res)
-            })
-            state.controller[API.CONNECT](LOGIC_NAME.CHECKIN, TIMEOUT.CONNECT)
+        // 状态
+        takeCheckinState({ state }) {
+            const stateJson = state.controller.strState
+
+            try {
+                const { StDeviceStatus } = JSON.parse(stateJson)
+
+                if (StDeviceStatus !== STATUS.HEALTHY) {
+                    return Promise.reject()
+                }
+
+                return Promise.resolve()
+            } catch (e) {
+                return Promise.reject()
+            }
         },
+        // 检查
+        async isCheckinOk({ dispatch }) {
+            try {
+                await dispatch('openCheckin')
+                await dispatch('takeCheckinState')
+                return Promise.resolve()
+            } catch (e) {
+                return Promise.reject()
+            }
+        },
+
         // 准备读标
-        readyCheckin({ dispatch, commit, state }) {
-            dispatch('lightCheckin')
-            commit('removeAll')
-            state.subscriber.add('ReadImageComplete', (res) => {
-                console.log('my ReadImageComplete', res)
-                // const count = res.labelAccnum
-                // commit('setCount', count)
-            })
-            state.subscriber.add('DeviceError', (res) => {
-                console.log('DeviceError', res)
-            })
-            state.subscriber.add('FatalError', (res) => {
-                console.log('FatalError', res)
-            })
-            state.subscriber.add('DataMissing', (res) => {
-                console.log('DataMissing', res)
-            })
-            state.subscriber.add('DataNotSupport', (res) => {
-                console.log('DataNotSupport', res)
-            })
-            state.subscriber.add('MediaInserted', (res) => {
-                console.log('MediaInserted', res)
-            })
-            state.subscriber.add('Timeout', (res) => {
-                console.log('Timeout', res)
-            })
-            state.subscriber.add('PrintHalted', (res) => {
-                console.log('PrintHalted', res)
-            })
+        readyCheckin({ commit, state }) {
+            const { p, res, rej } = pResRej()
+
+            state.subscriber.removeAll()
+
+            /** failed */
+            // failed
+            state.subscriber.add('DeviceError', () => xLog('DeviceError'))
+            state.subscriber.add('FatalError', () => xLog('FatalError'))
+            state.subscriber.add('Timeout', () => xLog('Timeout'))
+
+            state.subscriber.add('ReadImageComplete', (res) =>
+                xLog('ReadImageComplete', res)
+            )
+            state.subscriber.add('DataMissing', (res) =>
+                xLog('DataMissing', res)
+            )
+            state.subscriber.add('DataNotSupport', (res) =>
+                xLog('DataNotSupport', res)
+            )
+            state.subscriber.add('MediaInserted', (res) =>
+                xLog('MediaInserted', res)
+            )
+
+            // 调用完成读标时的回调，可在
+            state.subscriber.add('PrintHalted', () => xLog('PrintHalted'))
             state.subscriber.add('NoMedia', (res) => {
                 res = JSON.parse(res)
                 const count = res.labelAccnum
                 commit('setCount', count)
-                console.log('退标器接收', state.controller.strState)
+                xLog('NoMedia', res)
             })
 
             state.controller[API.READ_IMAGE](
                 6,
                 '{"CutNum":"5"}',
                 '',
-                TIMEOUT.CHECKIN
+                TIMEOUT.CHECKIN,
+                (ret) => (ret === 0 ? res() : rej())
             )
+
+            return p
+        },
+        async doCheckin({ dispatch, commit, state }) {
+            /** 检查读卡器 */
+            try {
+                await dispatch('isCheckinOk')
+            } catch (e) {
+                Message.warning('退标器异常，本机暂时无法为您提供服务。')
+                return Promise.reject()
+            }
+
+            /** 准备读卡 */
+            try {
+                await dispatch('readyCheckin')
+            } catch (e) {
+                Message.warning('退标器异常，本机暂时无法为您提供服务。')
+                return Promise.reject()
+            }
+
+            /** 亮起指示灯 */
+            dispatch('lightCheckin')
+            return Promise.resolve()
         },
         // 完成读卡
         doneCheckin({ dispatch, state }) {
-            state.controller[API.DONE_CHECKIN]((res) => {
-                console.log(res)
-                console.log('退标器结束', state.controller.strState)
+            // todo bug 完成接收可以继续读标
+            console.log(JSON.parse(state.controller.strState))
+            state.subscriber.removeAll()
+            state.controller['GetState']((res) => {
+                console.log('GetState', JSON.parse(res))
             })
-            dispatch('closeCheckin')
+            state.controller[API.DONE_CHECKIN]((res) => {
+                console.log(API.DONE_CHECKIN, res)
+            })
+            dispatch('closeCheckinLight')
         },
     },
 }

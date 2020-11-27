@@ -1,6 +1,6 @@
 import store from '@/store'
 ;(() => {
-    const long = 1000 * 60 * 5
+    const long = 1000 * 30
     let timeId = 0
 
     const openLater = () =>

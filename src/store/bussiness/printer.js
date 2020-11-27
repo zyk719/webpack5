@@ -16,6 +16,7 @@ const printer = {
         subscriber: {},
     },
     getters: {},
+
     mutations: {
         setPrinterControllerSubscriber(state, controller) {
             state.controller = controller

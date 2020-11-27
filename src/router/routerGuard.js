@@ -204,7 +204,7 @@ function routerGuard(router) {
         }
 
         /** 针对性设备检查页 */
-        // 1. 领标器 /user/supply
+        // 1. 领标器 /user/supply todo 本地开发时注释：测领标
         const loginAndToSupply =
             loginStatus === USER_LOGIN_STATUS_NAME && to.path === '/user/supply'
         if (loginAndToSupply) {
@@ -212,6 +212,17 @@ function routerGuard(router) {
                 await store.dispatch('isCheckoutOk')
             } catch (e) {
                 Message.error('领标器异常')
+                return next('/user/crossroad')
+            }
+        }
+        // 2. 退标器 /user/back todo 本地开发时注释：测退标
+        const loginAndToBack =
+            loginStatus === USER_LOGIN_STATUS_NAME && to.path === '/user/back'
+        if (loginAndToBack) {
+            try {
+                await store.dispatch('isCheckinOk')
+            } catch (e) {
+                Message.error('退标器异常')
                 return next('/user/crossroad')
             }
         }

@@ -72,7 +72,7 @@ const guideLight = {
                 equipment: EQUIPMENT.CHECKIN,
             })
         },
-        closeCheckin({ dispatch }) {
+        closeCheckinLight({ dispatch }) {
             dispatch('setLight', {
                 equipment: EQUIPMENT.CHECKIN,
                 action: LIGHT_ACTIONS.OFF,

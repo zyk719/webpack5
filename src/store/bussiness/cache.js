@@ -1,5 +1,9 @@
 import store from '@/store'
-import { hasSignCall, userCurrentNumberCall } from '@/api/bussiness/user'
+import {
+    hasSignCall,
+    userCurrentNumberCall,
+    isOpenCall,
+} from '@/api/bussiness/user'
 import { getFileList } from '@/api/app/sys'
 
 const cache = {
@@ -7,6 +11,12 @@ const cache = {
         userCurrentNumber: {},
         imgUrl: '',
         isSign: false,
+        isOpen: {
+            // 茶农申领开放 1 是 | 2 否
+            is_can_apply_grower: '2',
+            // 茶农退标开发 1 是 | 2 否
+            is_can_refund_grower: '2',
+        },
     },
     getters: {},
     mutations: {
@@ -19,10 +29,17 @@ const cache = {
         setIsSign(state, isSign) {
             state.isSign = isSign
         },
+        setIsOpen(state, isOpen) {
+            state.isOpen = isOpen
+        },
         resetCache(state) {
             state.userCurrentNumber = {}
             state.imgUrl = ''
             state.isSign = false
+            state.isOpen = {
+                checkin: false,
+                checkout: false,
+            }
         },
     },
     actions: {
@@ -63,6 +80,16 @@ const cache = {
             } else {
                 commit('setSignImgUrl', '')
             }
+        },
+        async getCheckoutCheckinStatus({ commit }) {
+            const equ_user_code = store.state.customer.code
+            if (!equ_user_code) {
+                return
+            }
+
+            const params = { equ_user_code }
+            const { obj } = await isOpenCall(params)
+            commit('setIsOpen', obj)
         },
     },
 }

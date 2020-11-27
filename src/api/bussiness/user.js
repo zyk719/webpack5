@@ -1,6 +1,6 @@
 import axios from '@/libs/api.request'
 
-const call = (url, method = 'post', sign = true) => data =>
+const call = (url, method = 'post', sign = true) => (data) =>
     axios.request({ url, data, method, sign })
 
 // 拿到 获取短信验证码所需的 token
@@ -60,3 +60,6 @@ export const evaluationListCall = call('/markTransferPj_equ/datagrid.action')
 
 // 3.2.15 茶农评价
 export const evaluationSubmitCall = call('/markTransferPj_equ/evaluate.action')
+
+// 3.2.19 申领/退标是否开放
+export const isOpenCall = call('/equipmentMarkApply_equ/grower_cfg.action')

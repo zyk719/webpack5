@@ -22,6 +22,8 @@ import ime from '@/store/bussiness/ime'
 import printer from '@/store/bussiness/printer'
 // 初始化数据
 import cache from '@/store/bussiness/cache'
+// 感应器
+import sensor from '@/store/bussiness/sensor'
 
 Vue.use(Vuex)
 
@@ -45,5 +47,6 @@ export default new Vuex.Store({
         cache,
         guideLight,
         printer,
+        sensor,
     },
 })

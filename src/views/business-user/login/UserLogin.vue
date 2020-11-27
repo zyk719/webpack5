@@ -43,9 +43,9 @@ export default {
     },
     methods: {
         init() {
-            this.readyForReading()
+            // this.readyForReading()
             // todo 无设备开发
-            // this.devAutoLogin()
+            this.devAutoLogin()
         },
         end() {
             clearInterval(this.timeId)

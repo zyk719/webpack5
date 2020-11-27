@@ -69,7 +69,7 @@ const rules = ((env) => {
 })(process.env.NODE_ENV)
 const plugins = ((env) => {
     const plugins = [
-        // new webpackBundleAnalyzer.BundleAnalyzerPlugin(),
+        new webpackBundleAnalyzer.BundleAnalyzerPlugin(),
         new MiniCssExtractPlugin({
             filename: './css/[name].[contenthash].css',
         }),
@@ -100,7 +100,10 @@ const dynamicConfig = {
         path: path.resolve(__dirname, './dist'),
         filename: './js/[name].[contenthash].js',
     },
-    devtool: 'inline-source-map',
+    devtool:
+        process.env.NODE_ENV === 'development'
+            ? 'inline-source-map'
+            : undefined,
     devServer: {
         contentBase: path.resolve(__dirname, './dist'),
         writeToDisk: false,
