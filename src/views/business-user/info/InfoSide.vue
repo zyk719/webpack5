@@ -74,8 +74,8 @@ export default {
         /** 接口调用 */
         // 0. 字典表
         getSysDd() {
-            Object.values(this.ddKeys).forEach(key =>
-                this.$store.dispatch('suitSysDd', key)
+            Object.values(this.ddKeys).forEach((key) =>
+                this.$store.dispatch('suitSysDd', { key, needCache: false })
             )
         },
     },

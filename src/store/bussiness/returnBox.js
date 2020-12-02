@@ -175,6 +175,4 @@ const returnBox = {
     },
 }
 
-// todo 重启 app 时，校验本机所有设备状态，所有设备正常，方可使用，否则即设备异常提示（全局蒙版，可以进入设备调试页面）
-// todo 开发设备调试页
 export default returnBox

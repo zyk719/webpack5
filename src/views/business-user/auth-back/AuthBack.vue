@@ -1,5 +1,5 @@
 <template>
-    <div>
+    <div style="position: relative">
         <UserAuthTitle>茶标退还{{ status.warn ? '须知' : '' }}</UserAuthTitle>
         <div class="content" :style="status.back ? 'padding-top: 0;' : ''">
             <!-- 退标提示 -->
@@ -140,6 +140,10 @@
                 >再退一笔</AioBtn
             >
         </div>
+        <Spin fix v-if="$store.state.cache.getOpenStatusLoading">
+            <Icon class="demo-spin-icon-load" type="ios-loading" :size="50" />
+            <div>退标开放状态查询中...</div>
+        </Spin>
     </div>
 </template>
 
@@ -332,6 +336,15 @@ export default {
         font-size: 36px;
         font-weight: 600;
         color: @primary;
+    }
+}
+.demo-spin-icon-load {
+    color: @primary;
+    animation: ani-demo-spin 1s linear infinite;
+
+    & + div {
+        .font(@primary, 28px, 400);
+        margin-top: 10px;
     }
 }
 </style>

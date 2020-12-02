@@ -84,7 +84,7 @@
 <script>
 import UserAuthTitle from '@/views/components/UserAuthTitle'
 import AioBtn from '@/views/components/AioBtn'
-import { speakMsg } from '@/libs/treasure'
+import { speakMsg, dateFormat } from '@/libs/treasure'
 
 export default {
     name: 'AuthNumber',
@@ -105,29 +105,36 @@ export default {
         // 凭条打印
         async handlePrint() {
             try {
-                // todo 打印内容
+                const { grower_name, grower_code } = this.info
+                const {
+                    all_amount,
+                    transfer_amount,
+                    entity_valid_amount,
+                    remaining_amount: rm,
+                    freeze_amount: fm,
+                    tea_area,
+                } = this.userCurrentNumber
+                const content =
+                    '*********************************************' +
+                    '\n' +
+                    `   茶 农 编 号：${grower_code}\n\n` +
+                    `   茶 农 姓 名：${grower_name}\n\n` +
+                    `   核 准 标 量：${all_amount / 1000 || 0}kg\n\n` +
+                    `   划 转 标 量：${transfer_amount / 1000 || 0}kg\n\n` +
+                    `   申 领 标 量：${entity_valid_amount / 1000 || 0}kg\n\n` +
+                    `   剩 余 标 量：${rm / 1000 || 0}kg（含冻结量：${
+                        fm / 1000 || 0
+                    }kg）\n\n` +
+                    `   茶 地 面 积：${tea_area || 0} 亩\n\n` +
+                    `   查 询 时 间：${dateFormat(
+                        'yyyy-MM-dd HH:mm:ss',
+                        new Date()
+                    )}\n`
+
                 this.$store.dispatch('lightPrinter')
                 const res = await this.$store.dispatch('doPrint', {
-                    title: `${this.info.grower_name}标量信息`,
-                    time: `打印时间：2020/11/25`,
-                    content: `
-                        核准量：${
-                            this.userCurrentNumber.all_amount / 1000 || 0
-                        }千克,
-                        划转量：${
-                            this.userCurrentNumber.transfer_amount / 1000 || 0
-                        }千克,
-                        申领量：${
-                            this.userCurrentNumber.entity_valid_amount / 1000 ||
-                            0
-                        }千克,
-                        剩余量：${
-                            this.userCurrentNumber.remaining_amount / 1000 || 0
-                        }千克（含冻结量：${
-                        this.userCurrentNumber.freeze_amount / 1000 || 0
-                    }千克）,
-                        茶地面积：${this.userCurrentNumber.tea_area || 0}亩,
-                    `,
+                    action: '查询',
+                    content,
                 })
                 speakMsg('success', `${res}，请取走凭条`)
                 // todo 打印全局控制

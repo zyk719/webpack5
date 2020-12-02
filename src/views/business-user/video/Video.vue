@@ -1,36 +1,17 @@
 <template>
-    <div class="user-video">
-        <AioBtn
-            class="back-position"
-            width="191"
-            height="65"
-            :cancel="true"
-            @click="goBackCrossroad"
-        >
-            <Icon type="ios-undo" />
-            返回
-        </AioBtn>
-        <div class="video">
-            <span class="mask">
-                <video
-                    controls
-                    controlslist="nodownload"
-                    autoplay
-                    height="100%"
-                    ref="mp4"
-                    :src="(videos[currentIdx] || {}).url || ''"
-                />
-            </span>
-        </div>
-        <div class="video-bar flex-ac-js">
-            <div
-                class="btn"
-                @mousedown="handleMove(-20)"
-                @mouseup="handleStopMove"
+    <div class="user-video flex-ac-fs">
+        <div class="video-list">
+            <AioBtn
+                width="191"
+                height="65"
+                style="margin: 55px 0"
+                :cancel="true"
+                @click="goBackCrossroad"
             >
-                <Icon type="ios-arrow-back" />
-            </div>
-            <div ref="scroll" class="list">
+                <Icon type="ios-undo" />
+                返回
+            </AioBtn>
+            <div class="list scroll-bar">
                 <video
                     class="cell"
                     v-for="(item, idx) in videos"
@@ -39,13 +20,17 @@
                     @click="handlePlay(idx)"
                 />
             </div>
-            <div
-                class="btn"
-                @mousedown="handleMove(20)"
-                @mouseup="handleStopMove"
-            >
-                <Icon type="ios-arrow-forward" />
-            </div>
+        </div>
+        <div class="video flex-center">
+            <video
+                controls
+                controlsList="nodownload"
+                disablePictureInPicture="true"
+                autoplay
+                style="height: 95%; width: 100%"
+                ref="mp4"
+                :src="(videos[currentIdx] || {}).url || ''"
+            />
         </div>
     </div>
 </template>
@@ -83,20 +68,10 @@ export default {
     },
     methods: {
         init() {
-            this.readyForMove()
             this.loopPlay()
-            this.disablePicInPic()
         },
 
         /** 用户事件 */
-        handleMove(num) {
-            this.long = num
-            this.touched = true
-        },
-        handleStopMove() {
-            this.long = 0
-            this.touched = false
-        },
         handlePlay(idx) {
             if (this.currentIdx === idx) {
                 return
@@ -110,7 +85,7 @@ export default {
             // 展示最新视频，缓存原来视频，删除移除的视频
             const sorted = videoList.reduce((acc, { contentid: id }) => {
                 if (this.cacheIds.has(id)) {
-                    const t = this.videos.find(video => video.id === id)
+                    const t = this.videos.find((video) => video.id === id)
                     acc.push(t)
                 } else {
                     acc.push({
@@ -125,43 +100,11 @@ export default {
                 this.getVideos(contentid, sorted[idx])
             )
         },
-        disablePicInPic() {
-            this.$refs.mp4.disablePictureInPicture = true
-        },
 
         goBackCrossroad() {
             this.$router.push('/user/crossroad')
         },
 
-        readyForMove() {
-            const scroll = this.$refs.scroll
-            const maxScrollLeft = scroll.scrollWidth - scroll.clientWidth
-            this.timeId = setInterval(() => {
-                if (!this.touched) {
-                    return
-                }
-                console.log('touched')
-                const sl = scroll.scrollLeft
-                const canNotLeft = sl === 0 && this.long < 0
-                const canNotRight = sl === maxScrollLeft && this.long > 0
-                log('canNotLeft', canNotLeft, 'canNotRight', canNotRight)
-                if (canNotLeft || canNotRight) {
-                    return
-                }
-
-                let r = scroll.scrollLeft + this.long
-                log('can move')
-                if (r <= 0) {
-                    log('left end')
-                    r = 0
-                } else if (r >= maxScrollLeft) {
-                    log('right end')
-                    r = maxScrollLeft
-                }
-
-                scroll.scrollLeft = r
-            }, 1000 / 60)
-        },
         loopPlay() {
             this.$refs.mp4.onended = () => {
                 let next = this.currentIdx + 1
@@ -206,60 +149,34 @@ export default {
 
 <style scoped lang="less">
 .user-video {
-    padding: 60px 40px 0;
+    padding: 0 40px;
     position: relative;
 
-    .back-position {
-        position: absolute;
-        top: 49px;
-        left: 40px;
+    .video-list {
+        width: 300px;
+        margin-right: 40px;
+        height: 100%;
+
+        .list {
+            height: calc(100% - 175px);
+            overflow-y: auto;
+
+            .cell {
+                width: 88%;
+                height: 135px;
+                object-fit: fill;
+
+                & + .cell {
+                    margin-top: 20px;
+                }
+            }
+        }
     }
 
     .video {
-        display: block;
-        height: 607px;
-        margin: 0 auto;
-        text-align: center;
-
-        .mask {
-            display: inline-block;
-            height: 100%;
-        }
-    }
-
-    .video-bar {
-        margin: 60px 175px 0;
-        height: 150px;
-
-        .btn {
-            width: 50px;
-            height: 150px;
-            background-color: rgba(57, 104, 134, 0.1);
-            cursor: pointer;
-            font-size: 32px;
-            .flexCenter();
-        }
-
-        .list {
-            flex: auto;
-            width: 0;
-            height: 150px;
-            margin: 0 40px;
-            overflow-x: auto;
-            display: flex;
-            align-items: center;
-
-            .cell {
-                flex: 0 0 auto;
-                height: 100%;
-
-                & + .cell {
-                    margin-left: 40px;
-                }
-
-                position: relative;
-            }
-        }
+        height: 100%;
+        flex: auto;
+        width: 0;
     }
 }
 </style>

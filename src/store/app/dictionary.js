@@ -17,9 +17,10 @@ const DEFAULT_SYS_DD_PARAMS = {
 const dictionary = {
     state: {
         sysDd: {},
+        sysDdCacheMapper: {},
     },
     getters: {
-        curSysDd: state => ddKeys =>
+        curSysDd: (state) => (ddKeys) =>
             Object.values(ddKeys).reduce((acc, ddKey) => {
                 acc[ddKey] = state.sysDd[ddKey]
                 return acc
@@ -29,15 +30,21 @@ const dictionary = {
         addSysDd(state, { key, d }) {
             Vue.set(state.sysDd, key, d)
         },
+        addSysDdCacheMapper(state, { key, needCache }) {
+            Vue.set(state.sysDdCacheMapper, key, needCache)
+        },
     },
     actions: {
-        suitSysDd({ dispatch, state }, key) {
-            if (key in state.sysDd) {
+        suitSysDd({ dispatch, state }, { key, needCache = true }) {
+            const cached = key in state.sysDd
+            const isNeedCache = state.sysDdCacheMapper[key]
+            if (cached && isNeedCache) {
                 return
             }
-            dispatch('getSysDd', key)
+
+            dispatch('getSysDd', { key, needCache })
         },
-        async getSysDd({ commit }, key) {
+        async getSysDd({ commit }, { key, needCache }) {
             if (typeof key === 'string') {
                 key = { key }
             }
@@ -48,11 +55,9 @@ const dictionary = {
                 label: value,
                 value: isNaN(Number(key)) ? key : Number(key),
             }))
-            commit({
-                type: 'addSysDd',
-                key: params.key,
-                d,
-            })
+
+            commit('addSysDd', { key: params.key, d })
+            commit('addSysDdCacheMapper', { key: params.key, needCache })
         },
     },
 }

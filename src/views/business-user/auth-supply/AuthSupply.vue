@@ -1,5 +1,5 @@
 <template>
-    <div>
+    <div style="position: relative">
         <UserAuthTitle>茶标申领</UserAuthTitle>
         <div class="content">
             <div v-show="status.fill">
@@ -192,6 +192,10 @@
                 再领一笔
             </AioBtn>
         </div>
+        <Spin fix v-if="$store.state.cache.getOpenStatusLoading">
+            <Icon class="demo-spin-icon-load" type="ios-loading" :size="50" />
+            <div>领标开放状态查询中...</div>
+        </Spin>
     </div>
 </template>
 
@@ -279,7 +283,6 @@ export default {
         // 监听是否可申领
         '$store.state.cache.isOpen.is_can_apply_grower': {
             handler(nv) {
-                console.log('in watch', nv)
                 const forbid = nv === '2'
                 if (forbid) {
                     this.statusTransfer('forbid')
@@ -491,7 +494,7 @@ export default {
         // 0. 字典表
         getSysDd() {
             Object.values(this.ddKeys).forEach((key) =>
-                this.$store.dispatch('suitSysDd', key)
+                this.$store.dispatch('suitSysDd', { key, needCache: false })
             )
         },
         // 1. 请求出标盒子信息
@@ -592,6 +595,15 @@ export default {
 
     /deep/ .ivu-form-item-error-tip {
         font-size: 28px;
+    }
+}
+.demo-spin-icon-load {
+    color: @primary;
+    animation: ani-demo-spin 1s linear infinite;
+
+    & + div {
+        .font(@primary, 28px, 400);
+        margin-top: 10px;
     }
 }
 </style>

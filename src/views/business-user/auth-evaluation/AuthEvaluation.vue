@@ -280,7 +280,7 @@ export default {
         // 0. 字典表
         getSysDd() {
             Object.values(this.ddKeys).forEach((key) =>
-                this.$store.dispatch('suitSysDd', key)
+                this.$store.dispatch('suitSysDd', { key })
             )
         },
         // 1. 划转评价列表

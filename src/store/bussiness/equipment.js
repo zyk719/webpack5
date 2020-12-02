@@ -15,20 +15,22 @@ import { getEquipmentInfoCall, getBoxInfoCall } from '@/api/bussiness/equipment'
 import { WEBSOCKET_ADDRESS } from '@/config'
 import { pResRej, API } from '@/store/bussiness/common'
 import { Message } from 'view-design'
+import { NEED_EQUIPMENT_PAGE_ARR } from '@/router/routerGuard'
+import router from '@/router'
 
 /** API */
-import { login, logout } from '@/api/app/user'
-
-// 初始化设备控制器
-const initControllers = () => {
-    //
-    // Object.keys(controllers).forEach(key => {
-    //     const controller =
-    // })
-}
+import { ADMIN_LOGIN_STATUS_NAME, login, logout } from '@/api/app/user'
 
 const equipment = {
     state: {
+        /**
+         * 目标页，在设备未就绪时前往会保存
+         */
+        toPath: undefined,
+        /**
+         * 正在连接到 QWebBridge
+         */
+        connecting: true,
         /**
          * 是否连接到 QWebBridge
          */
@@ -65,6 +67,12 @@ const equipment = {
         },
     },
     mutations: {
+        setToPath(state, toPath) {
+            state.toPath = toPath
+        },
+        setConnecting(state, status) {
+            state.connecting = status
+        },
         setConnectStatus(state, status) {
             state.connected = status
         },
@@ -92,6 +100,8 @@ const equipment = {
                 if (state.connected) {
                     Message.warning('与 QWebBridge 连接断开')
                     commit('setConnectStatus', false)
+
+                    // todo 需要设备页
                 }
             }
             const error = (evt) => {
@@ -158,13 +168,19 @@ const equipment = {
                 dispatch('startSensor')
             }, 2000)
         },
-        async initX({ dispatch, commit }) {
+        async initX({ dispatch, commit, state }) {
+            commit('setConnecting', true)
+
             /** 1. websocket */
             let socket
             try {
                 socket = await dispatch('connect')
                 log('QWebBridge 已连接')
             } catch (e) {
+                commit('setToPath', undefined)
+                commit('setConnecting', false)
+
+                Message.destroy()
                 Message.error('QWebBridge 连接失败')
                 console.error('QWebBridge 连接失败', e)
                 return
@@ -177,9 +193,14 @@ const equipment = {
                 commit('setQtObjects', objects)
                 log('QWebChannel 初始化完成')
             } catch (e) {
+                commit('setToPath', undefined)
+
+                Message.destroy()
                 Message.error('QWebChannel 初始化失败')
                 console.error('QWebChannel 初始化失败', e)
                 return
+            } finally {
+                commit('setConnecting', false)
             }
 
             /** 3. mac */
@@ -187,6 +208,12 @@ const equipment = {
                 const macInfo = await dispatch('getMac')
                 const mac = JSON.parse(macInfo)['MACINFO'][0]['MACADDRESS']
                 commit('setEquipmentBase', { mac })
+
+                // 管理员已登录，获取设备信息和盒子信息
+                if (getToken() === ADMIN_LOGIN_STATUS_NAME) {
+                    dispatch('getEquipmentInfo')
+                    dispatch('getBoxInfo')
+                }
                 log('Mac 获取完成')
             } catch (e) {
                 Message.error('Mac 获取失败')
@@ -196,22 +223,11 @@ const equipment = {
 
             /** 4. controller */
             dispatch('setController')
-        },
-        async getEquipmentBase({ commit, dispatch }) {
-            const equipmentBase = await new Promise((resolve) => {
-                window.qtObjects.common[API.GET_MAC]((macInfo) => {
-                    const mac = JSON.parse(macInfo)['MACINFO'][0]['MACADDRESS']
-                    resolve({ mac })
-                })
-            })
-            log('MAC >>> 已返回！')
 
-            commit('setEquipmentBase', equipmentBase)
-
-            // 管理员已登录时调用用户信息和盒子信息
-            if (getToken() === 'adminLogin') {
-                dispatch('getEquipmentInfo')
-                dispatch('getBoxInfo')
+            /** 5. 存在需要跳转页面，跳转 */
+            if (state.toPath) {
+                await router.push(state.toPath)
+                commit('setToPath', undefined)
             }
         },
         async getEquipmentInfo({ commit }) {

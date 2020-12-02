@@ -13,7 +13,6 @@
 <script>
 // components
 import Title from '@/views/components/Title'
-// import ScreenSaver from '@/components/ScreenSaver'
 const ScreenSaver = () =>
     import(/* webpackChunkName: "screenSaver" */ '@/components/ScreenSaver')
 
@@ -22,7 +21,7 @@ export default {
     components: { Title, ScreenSaver },
     data() {
         return {
-            include: ['Crossroad', 'Video', 'Info'],
+            include: ['Crossroad', 'Info', 'Video', 'Issue'],
         }
     },
 }

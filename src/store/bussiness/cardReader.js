@@ -298,7 +298,7 @@ const cardReader = {
                 // 1. 获取签名数据
                 dispatch('getSignStatus')
                 // 2. 获取领和退开放状态
-                dispatch('getCheckoutCheckinStatus')
+                dispatch('getCheckoutCheckinStatus', true)
 
                 /** 获取茶农信息 */
                 dispatch('getUserInfo', equ_user_code)

@@ -2,7 +2,7 @@
     <div class="admin-log">
         <div class="title-box">
             <AioBtn
-                style="margin-right: 199px;"
+                style="margin-right: 199px"
                 width="191"
                 height="65"
                 :cancel="true"
@@ -62,7 +62,7 @@ export default {
         columns() {
             let action = '存入'
 
-            const suitColumns = action => {
+            const suitColumns = (action) => {
                 const columns = [
                     {
                         title: `${action}日期`,
@@ -112,7 +112,7 @@ export default {
             }
 
             const r = sysDdType.find(
-                type => type.value === this.params.business_type
+                (type) => type.value === this.params.business_type
             )
 
             action = r.label
@@ -161,8 +161,8 @@ export default {
         /** 接口调用 */
         // 0. 字典表
         getSysDd() {
-            Object.values(this.ddKeys).forEach(key =>
-                this.$store.dispatch('suitSysDd', key)
+            Object.values(this.ddKeys).forEach((key) =>
+                this.$store.dispatch('suitSysDd', { key })
             )
         },
         // 1. 记录

@@ -7,7 +7,7 @@ import Axios from 'axios'
 
 import store from '@/store'
 import { getToken, setToken } from '@/libs/util'
-import { log } from '@/libs/treasure'
+import { isDev, log } from '@/libs/treasure'
 import { USER_LOGIN_STATUS_NAME } from '@/store/bussiness/cardReader'
 import { ADMIN_LOGIN_STATUS_NAME } from '@/api/app/user'
 import { Message } from 'view-design'
@@ -54,12 +54,9 @@ async function getVersion() {
 }
 
 function routerGuard(router) {
-    // log('router is', router.options)
-
     router.beforeEach(async (to, from, next) => {
         log(from.path, to.path)
         NProgress.done()
-        // equipmentStatus({}).then(res => log(res))
 
         /** 0. 刷新页面：对应业务逻辑 */
         /** 1. 前往登录页前（已登录无法触发?）：请求版本信息，比对后刷新页面 */
@@ -70,36 +67,39 @@ function routerGuard(router) {
 
         const loginStatus = getToken('token')
 
-        /** 0. 刷新页面 */
+        /**
+         * 0. 页面首次打开和刷新
+         */
         const isReload = from.name === null
         if (isReload) {
-            // 当前版本号保存
-            getVersion().then(({ version }) =>
-                localStorage.setItem(VERSION_CACHE_NAME, version)
-            )
-
-            // 连接 QWebBridge => 初始化设备控制器 => 获取 MAC 地址
-            // 若管理员已登录 && 获取设备和设备盒子信息
-            store.dispatch('initX')
-
-            // 在用户页 && 当前页需要登录 => 退出登录 => 返回首页
-            // 用户无法刷新，此操作仅在测试时生效
-            if (loginStatus === USER_LOGIN_STATUS_NAME) {
-                setToken('')
-
-                if (to.meta.requiresAuth) {
+            /** 当前页是用户页 */
+            if (to.path.startsWith('/user')) {
+                if (loginStatus === USER_LOGIN_STATUS_NAME) {
+                    setToken('')
+                }
+                if (to.path !== '/user/crossroad') {
                     return next('/user/crossroad')
                 }
             }
 
-            // todo 在用户登录页刷新时，需等读卡器就位后才能读卡
+            /** 硬件初始化 */
+            store.dispatch('initX')
+
+            /** 版本号刷新 */
+            if (!isDev) {
+                getVersion().then(({ version }) =>
+                    localStorage.setItem(VERSION_CACHE_NAME, version)
+                )
+            }
 
             return next()
         }
 
-        /** 1. 前往无需登录页且未登录：请求版本信息，不同则刷新页面 */
+        /**
+         * 1. 生产环境：前往无需登录页且未登录：请求版本信息，不同则刷新页面
+         */
         const needCompareVersion = !to.meta.requiresAuth && !loginStatus
-        if (needCompareVersion) {
+        if (!isDev && needCompareVersion) {
             getVersion().then(
                 ({ version }) =>
                     localStorage.getItem(VERSION_CACHE_NAME) !== version &&
@@ -110,48 +110,53 @@ function routerGuard(router) {
             )
         }
 
-        /** 2. 连接到设备后才能访问页：需 QWebBridge 已连接 */
-        const QWebBridgeConnected = store.state.equipment.connected
+        /** 2. need QWebBridge OK */
         const needEquipmentPage = NEED_EQUIPMENT_PAGE_ARR.includes(to.path)
-        if (!QWebBridgeConnected && needEquipmentPage) {
-            Message.warning({
-                content: '前往页面需要连接 QWebBridge 后才能访问！',
-                closable: true,
-                duration: 5,
-            })
-            return next(from.path)
+        if (needEquipmentPage) {
+            // 正在连接
+            const isConnecting = store.state.equipment.connecting
+            if (isConnecting) {
+                Message.info('QWebBridge 正在连接中...')
+                store.commit('setToPath', to.path)
+                return next(from.path)
+            }
+            // 未连接
+            const QWebBridgeConnected = store.state.equipment.connected
+            if (!QWebBridgeConnected) {
+                Message.info('QWebBridge 未连接。正在尝试重连...')
+                store.commit('setToPath', to.path)
+                store.dispatch('initX')
+                return next(from.path)
+            }
         }
 
         /** 2. 设备无故障才能访问的页面 */
         const needEquipmentOkPage = NEED_EQUIPMENT_OK_PAGE_ARR.includes(to.path)
         if (needEquipmentOkPage) {
+            // 已登录，异步调用，避免页面加载慢
             if (loginStatus) {
-                // 已登录异步调用
                 equipmentStatus({}).catch(() => {
-                    Message.warning({
-                        content: '自助机异常，当前无法使用！',
-                        closable: true,
-                    })
+                    Message.warning('自助机异常，暂时无法为您提供服务。')
                     next('/user/crossroad')
                 })
-            } else if (to.path === '/user/login') {
-                // 未登录前往登录页时同步调用
-                // 0. 读卡器状态查询
-                // todo 本地开发时注释
-                try {
-                    await store.dispatch('isCardReaderOk')
-                } catch (e) {
-                    Message.warning('读卡器异常，本机暂时无法为您提供服务。')
-                    return next('/user/crossroad')
-                }
+            }
+
+            // 未登录且前往登录页，同步调用
+            if (!loginStatus && to.path === '/user/login') {
+                // 0. 读卡器状态查询 todo 本地开发时注释 0
+                // try {
+                //     await store.dispatch('isCardReaderOk')
+                // } catch (e) {
+                //     Message.destroy()
+                //     Message.warning('读卡器异常，本机暂时无法为您提供服务。')
+                //     return next('/user/crossroad')
+                // }
                 // 1. 设备异常查询
                 try {
                     await equipmentStatus({})
                 } catch (e) {
-                    Message.warning({
-                        content: '自助机异常，当前页无法使用！',
-                        closable: true,
-                    })
+                    Message.destroy()
+                    Message.warning('自助机异常，暂时无法为您提供服务。')
                     return next('/user/crossroad')
                 }
             }
@@ -205,27 +210,28 @@ function routerGuard(router) {
 
         /** 针对性设备检查页 */
         // 1. 领标器 /user/supply todo 本地开发时注释：测领标
-        const loginAndToSupply =
-            loginStatus === USER_LOGIN_STATUS_NAME && to.path === '/user/supply'
-        if (loginAndToSupply) {
-            try {
-                await store.dispatch('isCheckoutOk')
-            } catch (e) {
-                Message.error('领标器异常')
-                return next('/user/crossroad')
-            }
-        }
+        // const loginAndToSupply =
+        //     loginStatus === USER_LOGIN_STATUS_NAME && to.path === '/user/supply'
+        // if (loginAndToSupply) {
+        //     try {
+        //         await store.dispatch('isCheckoutOk')
+        //     } catch (e) {
+        //         Message.error('领标器异常')
+        //         return next('/user/crossroad')
+        //     }
+        // }
+
         // 2. 退标器 /user/back todo 本地开发时注释：测退标
-        const loginAndToBack =
-            loginStatus === USER_LOGIN_STATUS_NAME && to.path === '/user/back'
-        if (loginAndToBack) {
-            try {
-                await store.dispatch('isCheckinOk')
-            } catch (e) {
-                Message.error('退标器异常')
-                return next('/user/crossroad')
-            }
-        }
+        // const loginAndToBack =
+        //     loginStatus === USER_LOGIN_STATUS_NAME && to.path === '/user/back'
+        // if (loginAndToBack) {
+        //     try {
+        //         await store.dispatch('isCheckinOk')
+        //     } catch (e) {
+        //         Message.error('退标器异常')
+        //         return next('/user/crossroad')
+        //     }
+        // }
 
         /** 5. 无需捕获条件 */
         NProgress.start()

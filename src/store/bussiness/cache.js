@@ -17,6 +17,7 @@ const cache = {
             // 茶农退标开发 1 是 | 2 否
             is_can_refund_grower: '2',
         },
+        getOpenStatusLoading: false,
     },
     getters: {},
     mutations: {
@@ -40,6 +41,9 @@ const cache = {
                 checkin: false,
                 checkout: false,
             }
+        },
+        setGetOpenStatusLoading(state, loading) {
+            state.getOpenStatusLoading = loading
         },
     },
     actions: {
@@ -81,15 +85,24 @@ const cache = {
                 commit('setSignImgUrl', '')
             }
         },
-        async getCheckoutCheckinStatus({ commit }) {
+        async getCheckoutCheckinStatus({ commit }, needLoading) {
             const equ_user_code = store.state.customer.code
             if (!equ_user_code) {
                 return
             }
 
-            const params = { equ_user_code }
-            const { obj } = await isOpenCall(params)
-            commit('setIsOpen', obj)
+            try {
+                if (needLoading) {
+                    commit('setGetOpenStatusLoading', true)
+                }
+                const params = { equ_user_code }
+                const { obj } = await isOpenCall(params)
+                commit('setIsOpen', obj)
+            } finally {
+                if (needLoading) {
+                    commit('setGetOpenStatusLoading', false)
+                }
+            }
         },
     },
 }

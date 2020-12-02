@@ -4,7 +4,7 @@
         <div class="content">
             <InfoSide class="switch" v-model="curSwitch" />
             <div class="main">
-                <div style="height: 585px;" v-show="status.display">
+                <div style="height: 585px" v-show="status.display">
                     <div
                         v-for="item in list"
                         :key="item.title + item.publish_DT"
@@ -13,7 +13,11 @@
                     >
                         <span
                             class="title"
-                            style="text-overflow: ellipsis;overflow: hidden;white-space: nowrap;"
+                            style="
+                                text-overflow: ellipsis;
+                                overflow: hidden;
+                                white-space: nowrap;
+                            "
                         >
                             <!-- icon -->
                             <Icon
@@ -25,7 +29,7 @@
                         </span>
                         <span
                             class="date"
-                            style="width: 200px;text-align: right;"
+                            style="width: 200px; text-align: right"
                         >
                             {{ item.publish_DT }}
                         </span>
@@ -45,18 +49,25 @@
                         <div class="title">{{ readContent['TITLE'] }}</div>
                         <div class="date">
                             {{ readContent.PUBLISH_DT.substr(0, 10) }}
-                            <span style="display: inline-block;width: 30px;" />
+                            <span style="display: inline-block; width: 30px" />
                             阅读量：{{ readContent.readCount }}
                         </div>
                         <div class="read-content">
                             <video
                                 autoplay
                                 controls
+                                ref="mp4"
+                                controlslist="nodownload"
+                                disablePictureInPicture="true"
                                 :src="item.HASHCODE"
                                 v-for="(item,
                                 idx) in readContent.showvideosList"
                                 :key="idx"
-                                style="width: 65%;display: block;margin: 0 auto 10px;"
+                                style="
+                                    width: 65%;
+                                    display: block;
+                                    margin: 0 auto 10px;
+                                "
                             />
                             <div v-html="content" />
                         </div>
@@ -70,6 +81,16 @@
                         </div>
                     </div>
                 </div>
+
+                <!-- 加载中 -->
+                <Spin fix v-if="loading">
+                    <Icon
+                        class="demo-spin-icon-load"
+                        type="ios-loading"
+                        :size="50"
+                    />
+                    <div>列表加载中...</div>
+                </Spin>
             </div>
         </div>
     </div>
@@ -95,7 +116,7 @@ export default {
     components: { AioBtn, AioPage, InfoSide, TopBar },
     data() {
         return {
-            curSwitch: '',
+            curSwitch: undefined,
             params: {
                 page: 1,
                 rows: 8,
@@ -107,6 +128,7 @@ export default {
                 read: false,
             },
             readContent: preReadContent(),
+            loading: false,
         }
     },
     computed: {
@@ -122,20 +144,20 @@ export default {
         },
     },
     watch: {
-        curSwitch() {
+        curSwitch(nv, ov) {
             // 回列表页
             this.statusTransfer('display')
 
             // 点击到其它新闻
             // 1. 清除已经在加载的 loading
-            const hasRead = this.list.find(row => row.loading)
+            const hasRead = this.list.find((row) => row.loading)
             if (hasRead) {
                 hasRead.loading = false
             }
 
             // 请求内容列表
             this.params.page === 1
-                ? this.getNews(this.curSwitch)
+                ? this.getNews(this.curSwitch, !!ov)
                 : (this.params.page = 1)
         },
         'params.page'() {
@@ -143,7 +165,10 @@ export default {
         },
     },
     activated() {
-        this.init()
+        this.getNews(this.curSwitch, false)
+    },
+    deactivated() {
+        this.statusTransfer('display')
     },
     methods: {
         init() {
@@ -157,7 +182,9 @@ export default {
                 this.readContent = preReadContent()
                 this.$refs.display.scrollTop = 0
             }
-            Object.keys(this.status).forEach(key => (this.status[key] = false))
+            Object.keys(this.status).forEach(
+                (key) => (this.status[key] = false)
+            )
             this.status[target] = true
         },
 
@@ -173,14 +200,13 @@ export default {
             this.statusTransfer('display')
         },
         async handleRead(ID, row) {
-            // todo 在 getNews 时，不执行
             if (row.loading) {
                 return
             }
 
             // 点击到其它新闻
             // 1. 清除已经在加载的 loading
-            const hasRead = this.list.find(row => row.loading)
+            const hasRead = this.list.find((row) => row.loading)
             if (hasRead) {
                 hasRead.loading = false
             }
@@ -213,21 +239,25 @@ export default {
 
         /** 接口请求 */
         // 茶企 cat06_02
-        async getNews(CATEGORYCODE) {
+        async getNews(CATEGORYCODE, needLoading = true) {
             if (!CATEGORYCODE) {
                 return
             }
-            const params = {
-                ...this.params,
-                CATEGORYCODE,
-            }
+
             try {
+                needLoading && (this.loading = true)
+                const params = {
+                    ...this.params,
+                    CATEGORYCODE,
+                }
                 const { rows, total } = await newsCall(params)
                 this.list = rows
                 this.total = total
             } catch (e) {
                 this.list = []
                 this.total = 0
+            } finally {
+                needLoading && (this.loading = false)
             }
         },
     },
@@ -235,8 +265,6 @@ export default {
 </script>
 
 <style scoped lang="less">
-@primary-color: @primary;
-
 .user-info {
     padding: 0 40px 40px;
     display: flex;
@@ -259,6 +287,7 @@ export default {
             overflow-y: auto;
             background: #d8edf2;
             padding: 20px 35px 2px 35px;
+            position: relative;
 
             .spoon {
                 height: 73px;
@@ -266,11 +295,8 @@ export default {
                 align-items: center;
                 justify-content: space-between;
                 cursor: pointer;
-                border-bottom: 1px solid @primary-color;
-
-                font-size: 24px;
-                font-weight: 600;
-                color: @primary-color;
+                border-bottom: 1px solid @primary;
+                .font(@primary, 24px, 600);
             }
 
             .read {
@@ -287,28 +313,19 @@ export default {
                     .title {
                         margin-top: 20px;
                         margin-bottom: 5px;
-                        font-size: 28px;
-                        font-weight: 600;
-                        color: @primary-color;
-                        line-height: 40px;
                         text-align: center;
+                        .font(@primary, 28px, 600, 40px);
                     }
 
                     .date {
-                        font-size: 20px;
-                        font-weight: 600;
-                        color: #396886;
-                        line-height: 28px;
                         text-align: center;
                         margin-bottom: 20px;
+                        .font(@primary, 20px, 600, 28px);
                     }
 
                     .read-content {
-                        font-size: 24px;
-                        font-weight: 400;
-                        color: #396886;
-                        line-height: 33px;
                         text-indent: 2em;
+                        .font(@primary, 24px, 400, 33px);
 
                         p {
                             margin-bottom: 20px;
@@ -325,10 +342,7 @@ export default {
                         background: #5eb3d7;
                         border-radius: 12px;
                         cursor: pointer;
-
-                        font-size: 24px;
-                        font-weight: 600;
-                        color: #fff;
+                        .font(#fff, 24px, 600);
                     }
                 }
             }

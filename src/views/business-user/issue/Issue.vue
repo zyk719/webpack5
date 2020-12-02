@@ -12,11 +12,11 @@
                 返回
             </AioBtn>
             <div class="title">常见问题</div>
-            <div style="width: 191px;opacity: 0;" />
+            <div style="width: 191px; opacity: 0" />
         </div>
         <div v-show="!read" class="content">
             <div class="content-wrap scroll-bar">
-                <div style="height: 585px;">
+                <div style="height: 585px">
                     <div
                         v-for="{ title, publish_DT, contentid } in list"
                         :key="title + publish_DT"
@@ -43,7 +43,7 @@
                 返回
             </AioBtn>
             <div class="title">{{ readContent['TITLE'] }}</div>
-            <div style="width: 191px;opacity: 0;" />
+            <div style="width: 191px; opacity: 0" />
             <div class="issue-date">
                 {{ readContent.PUBLISH_DT.substr(0, 10) }}
             </div>
@@ -79,8 +79,11 @@ export default {
             total: 0,
         }
     },
-    mounted() {
+    activated() {
         this.init()
+    },
+    deactivated() {
+        this.params.page = 1
     },
     watch: {
         'params.page'() {

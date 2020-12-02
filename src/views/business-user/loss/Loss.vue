@@ -42,8 +42,8 @@
             </div>
             <div v-show="status.submit">
                 <div class="title">请核对茶农卡信息：</div>
-                <div style="margin-top: 60px;" class="flex-ac-fs">
-                    <div style="width: 620px;" class="flex-ac-fs">
+                <div style="margin-top: 60px" class="flex-ac-fs">
+                    <div style="width: 620px" class="flex-ac-fs">
                         <span class="title">茶农编号：</span>
                         <span class="text">
                             {{ cardOwnerInfo.grower_code }}
@@ -56,8 +56,8 @@
                         </span>
                     </div>
                 </div>
-                <div style="margin-top: 40px;" class="flex-ac-fs">
-                    <div style="width: 620px;" class="flex-ac-fs">
+                <div style="margin-top: 40px" class="flex-ac-fs">
+                    <div style="width: 620px" class="flex-ac-fs">
                         <span class="title">联系电话：</span>
                         <span class="text">{{ cardOwnerInfo.phone }}</span>
                     </div>
@@ -65,7 +65,7 @@
                         <span class="title">茶农地址：</span>
                         <span
                             class="text"
-                            style="width: 366px;align-items: baseline;"
+                            style="width: 366px; align-items: baseline"
                         >
                             {{ cardOwnerInfo.addr }}
                         </span>
@@ -81,14 +81,18 @@
                         alt="icon"
                     />
                     <div
-                        style="height: 170px;line-height: 170px;margin-left: 60px;"
+                        style="
+                            height: 170px;
+                            line-height: 170px;
+                            margin-left: 60px;
+                        "
                     >
                         <div class="title">茶农卡已挂失，请尽快申请补卡。</div>
                     </div>
                 </div>
             </div>
         </div>
-        <div style="text-align: center;">
+        <div style="text-align: center">
             <AioBtn
                 :disabled="loading"
                 :cancel="true"
@@ -121,7 +125,7 @@ import AioBtn from '@/views/components/AioBtn'
 
 // helpers
 import config from '@/config'
-import { validateField, rulePhone } from '@/libs/athena'
+import { validateField, rulePhoneSpecial } from '@/libs/athena'
 import { doInterval } from '@/libs/treasure'
 import {
     msgTokenCall,
@@ -145,7 +149,7 @@ export default {
                 randnum: '',
             },
             rules: {
-                // mobile: rulePhone(),
+                mobile: rulePhoneSpecial(),
                 randnum: {
                     required: true,
                     message: '请输入验证码',
@@ -217,7 +221,9 @@ export default {
         /** 流程控制 */
         // 控制状态流
         statusTransfer(target) {
-            Object.keys(this.status).forEach(key => (this.status[key] = false))
+            Object.keys(this.status).forEach(
+                (key) => (this.status[key] = false)
+            )
             this.status[target] = true
         },
         async getCardInfo() {

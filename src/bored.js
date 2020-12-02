@@ -1,10 +1,16 @@
 import store from '@/store'
+import { SCREEN_SAVER_INTERVAL } from '@/config'
 ;(() => {
-    const long = 1000 * 30
     let timeId = 0
 
     const openLater = () =>
-        setTimeout(store.commit, long, 'toggleScreenSaver', true)
+        setTimeout(
+            store.commit,
+            SCREEN_SAVER_INTERVAL,
+            'toggleScreenSaver',
+            true
+        )
+
     timeId = openLater()
 
     return () => {

@@ -11,7 +11,9 @@
  * @returns {Promise}
  */
 export const validateField = (formRef, prop) =>
-    new Promise(resolve => formRef.validateField(prop, err => resolve(!err)))
+    new Promise((resolve) =>
+        formRef.validateField(prop, (err) => resolve(!err))
+    )
 
 const BLUR = 'blur'
 const CHANGE = 'change'
@@ -62,6 +64,24 @@ export const rulePhone = (required = true) => {
             max: 11,
         },
         ruleRegExp('手机号格式错误', /^1[3456789]\d{9}$/),
+    ]
+
+    return rule
+}
+// 手机号后带后缀校验：13388887777_123
+export const rulePhoneSpecial = (required = true) => {
+    const rule = [
+        {
+            required,
+            message: '请输入手机号',
+            trigger: CHANGE,
+        },
+        {
+            message: '手机号格式错误',
+            pattern: /^1[3456789]\d{9}$/,
+            trigger: BLUR,
+            transform: (value) => value.substr(0, 11),
+        },
     ]
 
     return rule

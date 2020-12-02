@@ -15,7 +15,7 @@ export const randImage = () => {
             responseType: 'arraybuffer',
             sign: false,
         })
-        .then(data => {
+        .then((data) => {
             const uint8Array = new Uint8Array(data).reduce(
                 (acc, byte) => acc + String.fromCharCode(byte),
                 ''
@@ -34,12 +34,12 @@ export const login = ({ loginname, passwd, randNum }) => {
     }
     return axios
         .request({
-            url: '/sysUser/login.action',
+            url: '/equipmentLogin_equ/admin_login.action',
             data,
             method: 'post',
             sign: true,
         })
-        .then(res => {
+        .then((res) => {
             // 向 cookie 添加已登录标识符
             setToken(ADMIN_LOGIN_STATUS_NAME)
             Message.success('登录成功')
@@ -54,7 +54,7 @@ export const logout = () =>
             url: '/sysUser/logout.action',
             method: 'post',
         })
-        .then(res => {
+        .then((res) => {
             // 从 cookie 去除已登录标识符
             setToken('')
             Message.success('管理员已退出登录')

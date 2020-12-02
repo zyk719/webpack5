@@ -73,7 +73,7 @@ const printer = {
             }
         },
         // 打印
-        print({ state, dispatch }, text) {
+        print({ state, dispatch }, { action, content, type = '茶农' }) {
             const { p, res, rej } = pResRej()
 
             state.subscriber.removeAll()
@@ -84,13 +84,15 @@ const printer = {
                 rej('InvalidPrintData')
             )
 
+            const printText =
+                `R10=<西湖龙井${type}自助机${action}凭证>` +
+                `,R11=<${content}>` +
+                ',R12=<*********************************************\n客服服务电话：0571-87758190>'
             const params = [
                 // FormName
                 'ReceiptForm',
                 // FieldValues
-                `R10=<${text.title || ''}>,R11=<${text.time || ''}>,R12=<${
-                    text.content || ''
-                }>`,
+                printText,
                 // MediaName
                 'ReceiptMedia',
                 // Alignment

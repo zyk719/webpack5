@@ -4,9 +4,9 @@
         <div class="info flex-ac-js">
             <div
                 class="username"
-                :style="
-                    `opacity: ${isAdminCross || isUserCrossAndLogin ? 1 : 0}`
-                "
+                :style="`opacity: ${
+                    isAdminCross || isUserCrossAndLogin ? 1 : 0
+                }`"
             >
                 欢迎您，{{ info.grower_name || '管理员' }}
             </div>
@@ -15,6 +15,13 @@
                 <div>
                     <div>星期{{ time.week }}</div>
                     <div>{{ time['YYYY/MM/DD'] }}</div>
+                </div>
+                <!-- 天气 -->
+                <div class="weather flex-center" v-show="showWeather">
+                    <img :src="weatherImg" alt="w" />
+                    <div style="margin-left: 5px; font-size: 36px">
+                        {{ tem }}℃
+                    </div>
                 </div>
             </div>
         </div>
@@ -25,6 +32,7 @@
 import dayjs from 'dayjs'
 
 import { CLICK_TO_ADMIN_COUNT } from '@/config'
+import axios from 'axios'
 
 const weekMapper = {
     0: '日',
@@ -60,6 +68,10 @@ export default {
             },
             haystack: 0,
             timeId: 0,
+            // 天气
+            showWeather: false,
+            weatherImg: '',
+            tem: '',
         }
     },
     computed: {
@@ -87,6 +99,9 @@ export default {
         },
     },
     mounted() {
+        this.getWeather()
+        setInterval(this.getWeather, 1000 * 60 * 60 * 3)
+
         setInterval(refreshTime, 1000, this.time)
     },
     methods: {
@@ -101,6 +116,19 @@ export default {
             this.timeId = setTimeout(() => {
                 this.haystack = 0
             }, 1000 * 10)
+        },
+        async getWeather() {
+            try {
+                const url = `https://www.tianqiapi.com/api?version=v6&appid=79894615&appsecret=PpZjK6iF`
+                const {
+                    data: { tem, wea_img },
+                } = await axios.get(url)
+                this.tem = tem
+                this.weatherImg = `https://www.mingtai18.com/tianqiapi/skin/pitaya/${wea_img}.png`
+                this.showWeather = true
+            } catch (e) {
+                this.showWeather = false
+            }
         },
     },
 }
@@ -120,11 +148,11 @@ export default {
     .text {
         font-size: 44px;
         letter-spacing: 2px;
-        width: 62.5%;
+        width: 58%;
     }
 
     .info {
-        width: 37.5%;
+        width: 42%;
 
         .username {
             font-size: 32px;
@@ -140,6 +168,11 @@ export default {
                 font-size: 56px;
                 margin-right: 20px;
                 letter-spacing: 1px;
+            }
+
+            .weather {
+                text-align: center;
+                margin-left: 20px;
             }
         }
     }

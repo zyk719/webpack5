@@ -8,13 +8,12 @@ import store from '@/store'
 import router from '@/router'
 
 // 参数加密
-const encryptParams = params => {
+const encryptParams = (params) => {
     const timestamp = getNowFormatDate()
     const signKey = cfg.signKey
     const data = JSON.stringify(params) || ''
     const sign = md5(signKey + data + timestamp + signKey).toUpperCase()
-    const r = { sign, timestamp, data }
-    return r
+    return { sign, timestamp, data }
 }
 
 // 请求成功拦截器
@@ -31,7 +30,7 @@ function reqInterceptorsSuccess(url, config) {
 }
 
 // 请求失败拦截器
-const reqInterceptorsError = error => Promise.reject(error)
+const reqInterceptorsError = (error) => Promise.reject(error)
 
 // 响应成功拦截器
 function resInterceptorsSuccess(url, { data, headers }) {
@@ -52,6 +51,12 @@ function resInterceptorsSuccess(url, { data, headers }) {
 
     // 需校验时，约定 success 为 Boolean
     if (!data.success) {
+        if (data.errorCode === 600) {
+            setToken('')
+            router
+                .push('/user/crossroad')
+                .then(() => store.commit('resetCardReader'))
+        }
         Notice.error({
             title: '请求出错',
             desc: data.msg || '服务器出现错误，请稍后重试',
@@ -72,18 +77,13 @@ function resInterceptorsError(url, error) {
     this.removeUrl(url)
 
     const errMsg = error.message
+    console.log(error.message)
     const code = errMsg.substr(errMsg.indexOf('code') + 5)
 
     // 管理员登录失效
-    if (code === '508') {
+    if (String(code) === '508') {
         setToken('')
         return router.push('/admin/login')
-    }
-
-    // 茶农登录失效
-    if (code === '600') {
-        setToken('')
-        return router.push('/user/crossroad')
     }
 
     const desc =
@@ -102,17 +102,14 @@ class HttpRequest {
     }
 
     getInsideConfig() {
-        const headers = {
-            macaddr: store.state.equipment.equipmentBase.mac,
-            // macaddr: '68-ED-A4-3C-21-CD',
-        }
-        const config = {
+        const macaddr = store.state.equipment.equipmentBase.mac
+        const headers = { macaddr }
+        return {
             headers,
             baseURL: this.baseUrl,
             withCredentials: true,
             transformRequest: [qs.stringify],
         }
-        return config
     }
 
     addUrl(url) {

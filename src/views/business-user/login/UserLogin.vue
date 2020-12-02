@@ -44,7 +44,7 @@ export default {
     methods: {
         init() {
             // this.readyForReading()
-            // todo 无设备开发
+            // todo 本地开发时打开：无设备开发
             this.devAutoLogin()
         },
         end() {

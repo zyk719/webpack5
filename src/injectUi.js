@@ -1,3 +1,5 @@
+import Vue from 'vue'
+import 'view-design/dist/styles/iview.css'
 import {
     Button,
     InputNumber,
@@ -24,7 +26,7 @@ Message.config({
     duration: 5,
 })
 
-function injectUi(Vue) {
+;((Vue) => {
     Vue.component('Button', Button)
     Vue.component('Table', Table)
     Vue.component('InputNumber', InputNumber)
@@ -44,6 +46,4 @@ function injectUi(Vue) {
     Vue.component('Spin', Spin)
     Vue.prototype.$Message = Message
     Vue.prototype.$Modal = Modal
-}
-
-export default injectUi
+})(Vue)

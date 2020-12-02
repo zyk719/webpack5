@@ -136,7 +136,18 @@ const dynamicConfig = {
             // Vue
             {
                 test: /\.vue$/,
-                loader: 'vue-loader',
+                use: [
+                    {
+                        loader: 'vue-loader',
+                    },
+                    // todo add loader to inject dd
+                    // {
+                    //     loader: path.resolve(
+                    //         __dirname,
+                    //         './webpack-loader/dd-loader.js'
+                    //     ),
+                    // },
+                ],
             },
             // image
             {
