@@ -24,6 +24,7 @@ import printer from '@/store/bussiness/printer'
 import cache from '@/store/bussiness/cache'
 // 感应器
 import sensor from '@/store/bussiness/sensor'
+import { putModuleStatusCall } from '@/api/bussiness/equipment'
 
 Vue.use(Vuex)
 
@@ -33,7 +34,30 @@ export default new Vuex.Store({
     },
     mutations: {
         toggleScreenSaver(state, status) {
+            if (status) {
+                const stateJson = state.sensor.controller.strState
+                if (stateJson) {
+                    const StProximityState = JSON.parse(stateJson)
+                        .StProximityState
+                    if (StProximityState === 'ON') {
+                        state.screenSaver = status
+                    } else if (StProximityState === 'OFF') {
+                        document.body.click()
+                    }
+                }
+                return
+            }
+
             state.screenSaver = status
+        },
+    },
+    actions: {
+        // 故障上报
+        putIssue({}, [module_type, module_status, module_status_desc]) {
+            const params = { module_type, module_status, module_status_desc }
+            // TODO upload
+            console.log(params)
+            // putModuleStatusCall(params)
         },
     },
     modules: {

@@ -6,9 +6,22 @@ import { Message } from 'view-design'
 import EventNotifiers from '@/store/bussiness/EventNotifiers'
 import { API, LOGIC_NAME, pResRej, TIMEOUT } from '@/store/bussiness/common'
 import { STATUS } from '@/store/bussiness/common'
+import {
+    TYPE_PRINTER,
+    STATUS_OK,
+    STATUS_ERROR,
+    STATUS_WARN,
+} from '@/libs/constant'
 
-const EQUIPMENT_NAME = '打印模块'
-const xLog = log.bind(null, EQUIPMENT_NAME)
+const _TYPE = TYPE_PRINTER
+const _NAME = '打印器'
+const _NAME_ENG = 'Printer'
+const _NAME_LOGIC = LOGIC_NAME.PRINTER
+const _INIT_ = `set${_NAME_ENG}ControllerSubscriber`
+const _OPEN_ = `open${_NAME_ENG}`
+const _LOOK_ = `take${_NAME_ENG}State`
+const _CHECK_ = `is${_NAME_ENG}Ok`
+const xLog = log.bind(null, _NAME)
 
 const printer = {
     state: {
@@ -18,15 +31,14 @@ const printer = {
     getters: {},
 
     mutations: {
-        setPrinterControllerSubscriber(state, controller) {
+        [_INIT_](state, controller) {
             state.controller = controller
             state.subscriber = new EventNotifiers(state.controller)
         },
     },
     actions: {
         /** hardware */
-        // 打开
-        openPrinter({ state }) {
+        [_OPEN_]({ state }) {
             const { p, res, rej } = pResRej()
 
             state.subscriber.removeAll()
@@ -34,44 +46,48 @@ const printer = {
             state.subscriber.add('OpenCompleted', res)
             state.subscriber.add('ConnectionOpened', res)
             // failed
-            state.subscriber.add('DeviceError', rej)
-            state.subscriber.add('FatalError', rej)
-            state.subscriber.add('Timeout', rej)
-
-            state.controller[API.CONNECT](
-                LOGIC_NAME.PRINTER,
-                TIMEOUT.CONNECT
-                // (ret) => xLog(ret)
+            state.subscriber.add('DeviceError', () =>
+                rej(`${_NAME}打开：'DeviceError'`)
             )
+            state.subscriber.add('FatalError', () =>
+                rej(`${_NAME}打开：'FatalError'`)
+            )
+            state.subscriber.add('Timeout', () =>
+                rej(`${_NAME}打开：'Timeout'`)
+            )
+
+            state.controller[API.CONNECT](_NAME_LOGIC, TIMEOUT.CONNECT)
 
             return p
         },
-        // 状态
-        takePrinterState({ state }) {
+        [_LOOK_]({ state }) {
             const stateJson = state.controller.strState
-
+            console.log(JSON.parse(stateJson))
             try {
                 const { StDeviceStatus } = JSON.parse(stateJson)
+                console.log('StDeviceStatus', StDeviceStatus)
 
                 if (StDeviceStatus !== STATUS.HEALTHY) {
-                    return Promise.reject()
+                    return Promise.reject(`${_NAME}状态：${StDeviceStatus}`)
                 }
 
                 return Promise.resolve()
             } catch (e) {
-                return Promise.reject()
+                return Promise.reject(`${_NAME}状态：解析异常`)
             }
         },
-        // 检查
-        async isPrinterOk({ dispatch }) {
+        async [_CHECK_]({ dispatch }) {
             try {
-                await dispatch('openPrinter')
-                await dispatch('takePrinterState')
+                await dispatch(_OPEN_)
+                await dispatch(_LOOK_)
+                dispatch('putIssue', [_TYPE, STATUS_OK])
                 return Promise.resolve()
             } catch (e) {
+                dispatch('putIssue', [_TYPE, STATUS_ERROR, e])
                 return Promise.reject(e)
             }
         },
+
         // 打印
         print({ state, dispatch }, { action, content, type = '茶农' }) {
             const { p, res, rej } = pResRej()
@@ -115,8 +131,8 @@ const printer = {
             try {
                 await dispatch('isPrinterOk')
             } catch (e) {
-                Message.error(`凭条打印机异常 ${e}`)
-                rej()
+                Message.error(`凭条打印机自检异常 ${e}`)
+                return rej()
             }
 
             /** 打印 */

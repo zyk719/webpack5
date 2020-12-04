@@ -16,6 +16,7 @@ import {
     pResRej,
     backHome,
 } from '@/store/bussiness/common'
+import { TYPE_IDC, STATUS_OK, STATUS_ERROR } from '@/libs/constant'
 
 /** 接口 */
 import {
@@ -24,8 +25,15 @@ import {
     userLogoutCall,
 } from '@/api/bussiness/user'
 
-const EQUIPMENT_NAME = '读卡器'
-const xLog = log.bind(null, EQUIPMENT_NAME)
+const _TYPE = TYPE_IDC
+const _NAME = '读卡器'
+const _NAME_ENG = 'CardReader'
+const _NAME_LOGIC = LOGIC_NAME.IDC
+const _INIT_ = `set${_NAME_ENG}ControllerSubscriber`
+const _OPEN_ = `open${_NAME_ENG}`
+const _LOOK_ = `take${_NAME_ENG}State`
+const _CHECK_ = `is${_NAME_ENG}Ok`
+const xLog = log.bind(null, _NAME)
 
 export const USER_LOGIN_STATUS_NAME = 'userLogin'
 
@@ -53,7 +61,7 @@ const cardReader = {
     },
     getters: {},
     mutations: {
-        setCardReaderControllerSubscriber(state, controller) {
+        [_INIT_](state, controller) {
             state.controller = controller
             state.subscriber = new EventNotifiers(state.controller)
         },
@@ -90,53 +98,67 @@ const cardReader = {
     },
     actions: {
         /** hardware */
-        // 打开
-        openCardReader({ state }) {
+        [_OPEN_]({ state }) {
             const { p, res, rej } = pResRej()
-
             state.subscriber.removeAll()
+            /** todo 注册所有事件 */
+
             // success
             state.subscriber.add('OpenCompleted', res)
             state.subscriber.add('ConnectionOpened', res)
-            // failed
-            state.subscriber.add('DeviceError', rej)
-            state.subscriber.add('FatalError', rej)
-            state.subscriber.add('Timeout', rej)
 
-            state.controller[API.CONNECT](
-                LOGIC_NAME.IDC,
-                TIMEOUT.CONNECT
-                // (ret) => xLog(ret)
+            // error
+            state.subscriber.add('DeviceError', () =>
+                rej(`${_NAME}打开：'DeviceError'`)
             )
+            state.subscriber.add('FatalError', () =>
+                rej(`${_NAME}打开：'FatalError'`)
+            )
+            state.subscriber.add('Timeout', () =>
+                rej(`${_NAME}打开：'Timeout'`)
+            )
+
+            // business waiting for card
+            // 回调执行顺序：
+            // 1. 传入的回调函数，在此函数最下面
+            // 2. CardInserted
+            // 3. ChipDataReceived: WFS_CMD_IDC_READ_RAW_DATA
+            // 4. CardAccepted
+            state.subscriber.add('CardInserted', res)
+            state.subscriber.add('ChipDataReceived', res)
+            state.subscriber.add('CardAccepted', res)
+
+            state.controller[API.CONNECT](_NAME_LOGIC, TIMEOUT.CONNECT)
 
             return p
         },
-        // 状态
-        takeCardReaderState({ state }) {
+        [_LOOK_]({ state }) {
             const stateJson = state.controller.strState
 
             try {
                 const { StDeviceStatus } = JSON.parse(stateJson)
 
                 if (StDeviceStatus !== STATUS.HEALTHY) {
-                    return Promise.reject()
+                    return Promise.reject(`${_NAME}状态：${StDeviceStatus}`)
                 }
 
                 return Promise.resolve()
             } catch (e) {
-                return Promise.reject()
+                return Promise.reject(`${_NAME}状态：解析异常`)
             }
         },
-        // 检查
-        async isCardReaderOk({ dispatch }) {
+        async [_CHECK_]({ dispatch }) {
             try {
-                await dispatch('openCardReader')
-                await dispatch('takeCardReaderState')
+                await dispatch(_OPEN_)
+                await dispatch(_LOOK_)
+                dispatch('putIssue', [_TYPE, STATUS_OK])
                 return Promise.resolve()
             } catch (e) {
-                return Promise.reject()
+                dispatch('putIssue', [_TYPE, STATUS_ERROR, e])
+                return Promise.reject(e)
             }
         },
+
         // 监听放卡
         addEventListenerPut({ state }) {
             const { p, res, rej } = pResRej()
@@ -356,32 +378,3 @@ const cardReader = {
 }
 
 export default cardReader
-
-/*
-// 取卡监听可用读卡时注册的事件，暂时不用
-addEventListenerTake({ state }) {
-    state.subscriber.removeAll()
-    state.subscriber.add('DeviceError', (res) => {
-        console.log('监听取卡回调 DeviceError', res)
-    })
-    state.subscriber.add('FatalError', (res) => {
-        console.log('监听取卡回调 FatalError', res)
-    })
-    state.subscriber.add('Timeout', (res) => {
-        console.log('监听取卡回调 Timeout', res)
-    })
-    state.subscriber.add('CardEjected', (res) => {
-        console.log('监听取卡回调 CardEjected', res)
-    })
-    state.subscriber.add('CardTaken', (res) => {
-        console.log('监听取卡回调 CardTaken', res)
-    })
-
-    xLog('取卡监听将会持续', TIMEOUT.EJECT / 60 / 1000, '分钟')
-    state.controller[API.EJECT](TIMEOUT.EJECT)
-},
-// 取消放卡监听
-cancelEventListenerPut({ state }) {
-    state.controller[API.CANCEL_INSERT]()
-},
-*/

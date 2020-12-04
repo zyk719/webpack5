@@ -4,7 +4,14 @@
             茶标存放
         </router-link>
         <router-link tag="div" class="big-btn take" to="/admin/take_tea_sign">
-            茶标取出
+            领标取出
+        </router-link>
+        <router-link
+            tag="div"
+            class="big-btn back"
+            to="/admin/take_tea_sign_back"
+        >
+            退标取出
         </router-link>
         <router-link tag="div" class="big-btn view" to="/admin/log">
             记录查看
@@ -12,7 +19,7 @@
         <AioBtn
             class="clear-fault-btn"
             :cancel="true"
-            style="right: 428px;"
+            style="right: 428px"
             width="125"
             height="60"
             @click="existAdmin"
@@ -21,7 +28,7 @@
         </AioBtn>
         <AioBtn
             class="clear-fault-btn"
-            style="right: 280px;"
+            style="right: 280px"
             width="125"
             height="60"
             @click="refreshPage"
@@ -80,8 +87,10 @@ export default {
 .bigBtnBg(@iconUrl, @bgUrl, @shadowColor) {
     background-image: url(@iconUrl), url(@bgUrl);
     background-repeat: no-repeat;
-    background-position: 50% 40.6667%, 50%;
+    background-position: 50% 34.8572%, 50%;
+    background-size: auto, cover;
     text-shadow: 0 2px 5px @shadowColor;
+    border-radius: 15px;
 }
 
 .crossroad {
@@ -89,14 +98,14 @@ export default {
 
     .big-btn {
         display: inline-block;
-        width: 420px;
-        height: 610px;
-        padding-top: 351px;
+        width: 360px;
+        height: 522px;
+        padding-top: 300px;
         text-align: center;
         cursor: pointer;
 
         & + .big-btn {
-            margin-left: 120px;
+            margin-left: 88px;
         }
 
         .font(#fff, 48px, 600, 67px, 4px);
@@ -108,6 +117,10 @@ export default {
 
     .take {
         .bigBtnBg('./take-icon.svg', './take-bg.svg', #65511b);
+    }
+
+    .back {
+        .bigBtnBg('./back-icon.svg', './back-bg.svg', #65511b);
     }
 
     .view {

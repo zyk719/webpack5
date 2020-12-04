@@ -10,82 +10,81 @@ import {
     TIMEOUT,
 } from '@/store/bussiness/common'
 import store from '../index'
+import { TYPE_SENSOR, STATUS_OK, STATUS_ERROR } from '@/libs/constant'
 
-const EQUIPMENT_NAME = '感应器'
-const xLog = log.bind(null, EQUIPMENT_NAME)
+const _TYPE = TYPE_SENSOR
+const _NAME = '感应器'
+const _NAME_ENG = 'Sensor'
+const _NAME_LOGIC = LOGIC_NAME.SENSOR
+const _INIT_ = `set${_NAME_ENG}ControllerSubscriber`
+const _OPEN_ = `open${_NAME_ENG}`
+const _LOOK_ = `take${_NAME_ENG}State`
+const _CHECK_ = `is${_NAME_ENG}Ok`
+const xLog = log.bind(null, _NAME)
 
 const sensor = {
     state: {
         controller: {},
         subscriber: {},
-        timeId: 0,
     },
     getters: {},
     mutations: {
-        setSensorControllerSubscriber(state, controller) {
+        [_INIT_](state, controller) {
             state.controller = controller
             state.subscriber = new EventNotifiers(state.controller)
-        },
-        setTimeId(state, timeId) {
-            state.timeId = timeId
         },
     },
     actions: {
         /** hardware */
-        // 打开
-        openSensor({ state }) {
+        [_OPEN_]({ state }) {
             const { p, res, rej } = pResRej()
 
             state.subscriber.removeAll()
             // success
-            state.subscriber.add('OpenCompleted', () => xLog('OpenCompleted'))
-            state.subscriber.add('ConnectionOpened', () =>
-                xLog('ConnectionOpened')
-            )
+            state.subscriber.add('OpenCompleted', res)
+            state.subscriber.add('ConnectionOpened', res)
             // failed
-            state.subscriber.add('DeviceError', () => xLog('DeviceError'))
-            state.subscriber.add('FatalError', () => xLog('FatalError'))
-            state.subscriber.add('Timeout', () => xLog('Timeout'))
-
-            state.controller[API.CONNECT](
-                LOGIC_NAME.SENSOR,
-                TIMEOUT.CONNECT,
-                /**
-                 * 此处回调 较 事件监听回调 靠后
-                 * 执行成功 ret 0
-                 * 执行失败 ret -1
-                 */
-                (ret) => (ret === '0' ? res() : rej())
+            state.subscriber.add('DeviceError', () =>
+                rej(`${_NAME}打开：'DeviceError'`)
             )
+            state.subscriber.add('FatalError', () =>
+                rej(`${_NAME}打开：'FatalError'`)
+            )
+            state.subscriber.add('Timeout', () =>
+                rej(`${_NAME}打开：'Timeout'`)
+            )
+
+            state.controller[API.CONNECT](_NAME_LOGIC, TIMEOUT.CONNECT)
 
             return p
         },
-        // 状态
-        takeSensorState({ state }) {
+        [_LOOK_]({ state }) {
             const stateJson = state.controller.strState
 
             try {
                 const { StDeviceStatus } = JSON.parse(stateJson)
 
                 if (StDeviceStatus !== STATUS.HEALTHY) {
-                    return Promise.reject()
+                    return Promise.reject(`${_NAME}状态：${StDeviceStatus}`)
                 }
 
                 return Promise.resolve()
             } catch (e) {
-                return Promise.reject()
+                return Promise.reject(`${_NAME}状态：解析异常`)
             }
         },
-        // 检查
-        async isSensorOk({ dispatch }) {
+        async [_CHECK_]({ dispatch }) {
             try {
-                await dispatch('openSensor')
-                await dispatch('takeSensorState')
+                await dispatch(_OPEN_)
+                await dispatch(_LOOK_)
+                dispatch('putIssue', [_TYPE, STATUS_OK])
                 return Promise.resolve()
             } catch (e) {
-                return Promise.reject()
+                dispatch('putIssue', [_TYPE, STATUS_ERROR, e])
+                return Promise.reject(e)
             }
         },
+
         // 启用
         async startSensor({ state, commit, dispatch }) {
             await dispatch('isSensorOk')
@@ -98,20 +97,11 @@ const sensor = {
                 if (res === 'OFF') {
                     // 关闭屏保
                     document.querySelector('.screen-saver').click()
-                    // 清除发短信的延时 todo 退出登录时也要清除
-                    clearTimeout(state.timeId)
                 } else if (res === 'ON') {
                     // 已登录时人离开
                     const loginStatus = getToken()
                     if (loginStatus === USER_LOGIN_STATUS_NAME) {
                         speakMsg('warning', '请取走您的茶农卡')
-                        // 倒计时 10s 后, 调接口发短信提示
-                        commit(
-                            'setTimeId',
-                            setTimeout(() => {
-                                console.error('发短信提示，未取卡')
-                            }, 1000 * 10)
-                        )
                     }
                 }
             })

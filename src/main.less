@@ -13,10 +13,6 @@ body {
   user-select: none;
 }
 
-//video::-webkit-media-controls-fullscreen-button {
-//  display: none;
-//}
-
 // common
 .flex-column {
   display: flex;
@@ -33,6 +29,12 @@ body {
   display: flex;
   align-items: center;
   justify-content: space-between;
+}
+
+.flex-ac-jsa {
+  display: flex;
+  align-items: center;
+  justify-content: space-around;
 }
 
 .flex-ac-fs {
@@ -96,4 +98,9 @@ body {
   // 定义右下角拖动块的样式
   &::-webkit-resizer {
   }
+}
+
+// 去除全屏按钮
+video::-webkit-media-controls-fullscreen-button {
+  display: none;
 }

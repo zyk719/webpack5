@@ -28,6 +28,7 @@ export const NEED_EQUIPMENT_PAGE_ARR = [
     '/admin/crossroad',
     '/admin/put_tea_sign',
     '/admin/take_tea_sign',
+    '/admin/take_tea_sign_back',
     '/admin/log',
 ]
 
@@ -42,6 +43,7 @@ const NEED_EQUIPMENT_OK_PAGE_ARR = [
     '/user/evaluation',
     '/admin/put_tea_sign',
     '/admin/take_tea_sign',
+    '/admin/take_tea_sign_back',
 ]
 
 async function getVersion() {
@@ -144,13 +146,13 @@ function routerGuard(router) {
             // 未登录且前往登录页，同步调用
             if (!loginStatus && to.path === '/user/login') {
                 // 0. 读卡器状态查询 todo 本地开发时注释 0
-                // try {
-                //     await store.dispatch('isCardReaderOk')
-                // } catch (e) {
-                //     Message.destroy()
-                //     Message.warning('读卡器异常，本机暂时无法为您提供服务。')
-                //     return next('/user/crossroad')
-                // }
+                try {
+                    await store.dispatch('isCardReaderOk')
+                } catch (e) {
+                    Message.destroy()
+                    Message.warning('读卡器异常，本机暂时无法为您提供服务。')
+                    return next('/user/crossroad')
+                }
                 // 1. 设备异常查询
                 try {
                     await equipmentStatus({})
@@ -210,28 +212,28 @@ function routerGuard(router) {
 
         /** 针对性设备检查页 */
         // 1. 领标器 /user/supply todo 本地开发时注释：测领标
-        // const loginAndToSupply =
-        //     loginStatus === USER_LOGIN_STATUS_NAME && to.path === '/user/supply'
-        // if (loginAndToSupply) {
-        //     try {
-        //         await store.dispatch('isCheckoutOk')
-        //     } catch (e) {
-        //         Message.error('领标器异常')
-        //         return next('/user/crossroad')
-        //     }
-        // }
+        const loginAndToSupply =
+            loginStatus === USER_LOGIN_STATUS_NAME && to.path === '/user/supply'
+        if (loginAndToSupply) {
+            try {
+                await store.dispatch('isCheckoutOk')
+            } catch (e) {
+                Message.error('领标器异常')
+                return next('/user/crossroad')
+            }
+        }
 
         // 2. 退标器 /user/back todo 本地开发时注释：测退标
-        // const loginAndToBack =
-        //     loginStatus === USER_LOGIN_STATUS_NAME && to.path === '/user/back'
-        // if (loginAndToBack) {
-        //     try {
-        //         await store.dispatch('isCheckinOk')
-        //     } catch (e) {
-        //         Message.error('退标器异常')
-        //         return next('/user/crossroad')
-        //     }
-        // }
+        const loginAndToBack =
+            loginStatus === USER_LOGIN_STATUS_NAME && to.path === '/user/back'
+        if (loginAndToBack) {
+            try {
+                await store.dispatch('isCheckinOk')
+            } catch (e) {
+                Message.error('退标器异常')
+                return next('/user/crossroad')
+            }
+        }
 
         /** 5. 无需捕获条件 */
         NProgress.start()

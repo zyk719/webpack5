@@ -1,6 +1,6 @@
 <template>
     <div class="take-tea-sign">
-        <div class="title">茶标取出</div>
+        <div class="title">领标取出</div>
         <Form
             label-colon
             ref="form"
@@ -33,7 +33,7 @@
                         <AioInput
                             readonly
                             placeholder="选择模块后填充"
-                            style="width: 454px;"
+                            style="width: 454px"
                             :value="boxById().mark_typename"
                         />
                     </FormItem>
@@ -43,7 +43,7 @@
                         <AioInput
                             readonly
                             placeholder="选择模块后填充"
-                            style="width: 454px;"
+                            style="width: 454px"
                             :value="boxById().specificationsname"
                         />
                     </FormItem>
@@ -52,7 +52,7 @@
                     <FormItem label="茶标号段">
                         <AioInput
                             placeholder="请输入"
-                            style="width: 454px;"
+                            style="width: 454px"
                             v-model="params.mark_codes[0][0]"
                             @click.native="showIme('num')"
                             @on-blur="hideIme()"
@@ -60,7 +60,7 @@
                         <span class="interval">-</span>
                         <AioInput
                             placeholder="请输入"
-                            style="width: 454px;"
+                            style="width: 454px"
                             v-model="params.mark_codes[0][1]"
                             @click.native="showIme('num')"
                             @on-blur="hideIme()"
@@ -71,10 +71,10 @@
                         <span class="count-warn">{{ calcWarn }}</span>
                     </FormItem>
                 </Col>
-                <Col span="24" style="text-align: center;">
+                <Col span="24" style="text-align: center">
                     <AioBtn
                         :disabled="loading || clearLoading"
-                        style="margin-top: 60px;"
+                        style="margin-top: 60px"
                         @click="goBackCrossroad"
                         :cancel="true"
                     >
@@ -83,7 +83,7 @@
                     <AioBtn
                         :disabled="clearLoading"
                         :loading="loading"
-                        style="margin-top: 60px;"
+                        style="margin-top: 60px"
                         @click="handleSave"
                     >
                         取出
@@ -91,7 +91,7 @@
                     <AioBtn
                         :disabled="loading"
                         :loading="clearLoading"
-                        style="margin-top: 60px;"
+                        style="margin-top: 60px"
                         @click="handleClear"
                     >
                         全部取出
@@ -115,7 +115,7 @@ const defaultParams = () => ({
 })
 
 export default {
-    name: 'PutTeaSign',
+    name: 'TakeTeaSign',
     components: { AioBtn, AioInput },
     data() {
         return {
@@ -202,7 +202,7 @@ export default {
             // 参数处理
             const params = JSON.parse(JSON.stringify(this.params))
             // [[111, 222], [333, 333]] => ['111-222', '333']
-            const markCodesArr = params.mark_codes.map(markCode => {
+            const markCodesArr = params.mark_codes.map((markCode) => {
                 // 前后一致时，不用 - 隔开
                 if (markCode[0] === markCode[1]) {
                     return markCode[0]
@@ -297,7 +297,7 @@ export default {
                     specificationsname: '',
                 }
             }
-            const box = this.boxInfo.find(box => box.equipmentbox_id === id)
+            const box = this.boxInfo.find((box) => box.equipmentbox_id === id)
             return box
         },
         // 4. 清除参数

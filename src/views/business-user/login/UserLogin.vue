@@ -43,9 +43,9 @@ export default {
     },
     methods: {
         init() {
-            // this.readyForReading()
+            this.readyForReading()
             // todo 本地开发时打开：无设备开发
-            this.devAutoLogin()
+            // this.devAutoLogin()
         },
         end() {
             clearInterval(this.timeId)

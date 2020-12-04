@@ -15,7 +15,7 @@ VueRouter.prototype.push = function push(location, onResolve, onReject) {
     if (onResolve || onReject) {
         return originalPush.call(this, location, onResolve, onReject)
     }
-    return originalPush.call(this, location).catch(err => err)
+    return originalPush.call(this, location).catch((err) => err)
 }
 
 const routes = [
@@ -65,6 +65,17 @@ const routes = [
                 component: () =>
                     import(
                         /* webpackChunkName: "takeTeaSign" */ '@/views/business-admin/take-tea-sign/TakeTeaSign'
+                    ),
+                meta: {
+                    requiresAuth: true,
+                },
+            },
+            {
+                path: '/admin/take_tea_sign_back',
+                name: 'TakeTeaSignBack',
+                component: () =>
+                    import(
+                        /* webpackChunkName: "takeTeaSignBack" */ '@/views/business-admin/take-tea-sign/TakeTeaSignBack'
                     ),
                 meta: {
                     requiresAuth: true,

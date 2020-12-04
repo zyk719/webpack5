@@ -9,9 +9,17 @@ import { hex2Str } from '@/libs/treasure'
 /** constant */
 import { API, STATUS, TIMEOUT, LOGIC_NAME } from '@/store/bussiness/common'
 import EventNotifiers from '@/store/bussiness/EventNotifiers'
+import { TYPE_CHECKOUT, STATUS_OK, STATUS_ERROR } from '@/libs/constant'
 
-const EQUIPMENT_NAME = '领标器'
-const xLog = log.bind(null, EQUIPMENT_NAME)
+const _TYPE = TYPE_CHECKOUT
+const _NAME = '领标器'
+const _NAME_ENG = 'Checkout'
+const _NAME_LOGIC = LOGIC_NAME.CHECKOUT
+const _INIT_ = `set${_NAME_ENG}ControllerSubscriber`
+const _OPEN_ = `open${_NAME_ENG}`
+const _LOOK_ = `take${_NAME_ENG}State`
+const _CHECK_ = `is${_NAME_ENG}Ok`
+const xLog = log.bind(null, _NAME)
 
 /**
  * params
@@ -49,15 +57,14 @@ const checkout = {
     },
     getters: {},
     mutations: {
-        setCheckoutControllerSubscriber(state, controller) {
+        [_INIT_](state, controller) {
             state.controller = controller
             state.subscriber = new EventNotifiers(state.controller)
         },
     },
     actions: {
         /** hardware */
-        // 打开
-        openCheckout({ state }) {
+        [_OPEN_]({ state }) {
             const { p, res, rej } = pResRej()
 
             state.subscriber.removeAll()
@@ -65,44 +72,62 @@ const checkout = {
             state.subscriber.add('OpenCompleted', res)
             state.subscriber.add('ConnectionOpened', res)
             // failed
-            state.subscriber.add('DeviceError', rej)
-            state.subscriber.add('FatalError', rej)
-            state.subscriber.add('Timeout', rej)
-
-            state.controller[API.CONNECT](
-                LOGIC_NAME.CHECKOUT,
-                TIMEOUT.CONNECT
-                // (ret) => xLog(ret)
+            state.subscriber.add('DeviceError', () =>
+                rej(`${_NAME}打开：'DeviceError'`)
             )
+            state.subscriber.add('FatalError', () =>
+                rej(`${_NAME}打开：'FatalError'`)
+            )
+            state.subscriber.add('Timeout', () =>
+                rej(`${_NAME}打开：'Timeout'`)
+            )
+
+            state.controller[API.CONNECT](_NAME_LOGIC, TIMEOUT.CONNECT)
 
             return p
         },
-        // 状态
-        takeCheckoutState({ state }) {
+        [_LOOK_]({ state }) {
             const stateJson = state.controller.strState
 
             try {
                 const { StDeviceStatus } = JSON.parse(stateJson)
 
                 if (StDeviceStatus !== STATUS.HEALTHY) {
-                    return Promise.reject()
+                    return Promise.reject(`${_NAME}状态：${StDeviceStatus}`)
                 }
 
                 return Promise.resolve()
             } catch (e) {
-                return Promise.reject()
+                return Promise.reject(`${_NAME}状态：解析异常`)
             }
         },
-        // 检查
-        async isCheckoutOk({ dispatch }) {
+        [_LOOK_]({ state }) {
+            const stateJson = state.controller.strState
+
             try {
-                await dispatch('openCheckout')
-                await dispatch('takeCheckoutState')
+                const { StDeviceStatus } = JSON.parse(stateJson)
+
+                if (StDeviceStatus !== STATUS.HEALTHY) {
+                    return Promise.reject(`${_NAME}状态：${StDeviceStatus}`)
+                }
+
                 return Promise.resolve()
             } catch (e) {
-                return Promise.reject()
+                return Promise.reject(`${_NAME}状态：解析异常`)
             }
         },
+        async [_CHECK_]({ dispatch }) {
+            try {
+                await dispatch(_OPEN_)
+                await dispatch(_LOOK_)
+                dispatch('putIssue', [_TYPE, STATUS_OK])
+                return Promise.resolve()
+            } catch (e) {
+                dispatch('putIssue', [_TYPE, STATUS_ERROR, e])
+                return Promise.reject(e)
+            }
+        },
+
         // 出标
         sendSign({ state }, params) {
             const { p, res, rej } = pResRej()

@@ -13,9 +13,17 @@ import {
     LOGIC_NAME,
     pResRej,
 } from '@/store/bussiness/common'
+import { TYPE_CHECKIN, STATUS_OK, STATUS_ERROR } from '@/libs/constant'
 
-const EQUIPMENT_NAME = '退标器'
-const xLog = log.bind(null, EQUIPMENT_NAME)
+const _TYPE = TYPE_CHECKIN
+const _NAME = '退标器'
+const _NAME_ENG = 'Checkin'
+const _NAME_LOGIC = LOGIC_NAME.CHECKIN
+const _INIT_ = `set${_NAME_ENG}ControllerSubscriber`
+const _OPEN_ = `open${_NAME_ENG}`
+const _LOOK_ = `take${_NAME_ENG}State`
+const _CHECK_ = `is${_NAME_ENG}Ok`
+const xLog = log.bind(null, _NAME)
 
 const returnBox = {
     state: {
@@ -26,7 +34,7 @@ const returnBox = {
     },
     getters: {},
     mutations: {
-        setCheckinControllerSubscriber(state, controller) {
+        [_INIT_](state, controller) {
             state.controller = controller
             state.subscriber = new EventNotifiers(state.controller)
         },
@@ -39,58 +47,52 @@ const returnBox = {
     },
     actions: {
         /** hardware */
-        // 打开
-        openCheckin({ state }) {
+        [_OPEN_]({ state }) {
             const { p, res, rej } = pResRej()
 
             state.subscriber.removeAll()
             // success
-            state.subscriber.add('OpenCompleted', () => xLog('OpenCompleted'))
-            state.subscriber.add('ConnectionOpened', () =>
-                xLog('ConnectionOpened')
-            )
+            state.subscriber.add('OpenCompleted', res)
+            state.subscriber.add('ConnectionOpened', res)
             // failed
-            state.subscriber.add('DeviceError', () => xLog('DeviceError'))
-            state.subscriber.add('FatalError', () => xLog('FatalError'))
-            state.subscriber.add('Timeout', () => xLog('Timeout'))
-
-            state.controller[API.CONNECT](
-                LOGIC_NAME.CHECKIN,
-                TIMEOUT.CONNECT,
-                /**
-                 * 此处回调 较 事件监听回调 靠后
-                 * 执行成功 ret 0
-                 * 执行失败 ret -1
-                 */
-                (ret) => (ret === '0' ? res() : rej())
+            state.subscriber.add('DeviceError', () =>
+                rej(`${_NAME}打开：'DeviceError'`)
             )
+            state.subscriber.add('FatalError', () =>
+                rej(`${_NAME}打开：'FatalError'`)
+            )
+            state.subscriber.add('Timeout', () =>
+                rej(`${_NAME}打开：'Timeout'`)
+            )
+
+            state.controller[API.CONNECT](_NAME_LOGIC, TIMEOUT.CONNECT)
 
             return p
         },
-        // 状态
-        takeCheckinState({ state }) {
+        [_LOOK_]({ state }) {
             const stateJson = state.controller.strState
 
             try {
                 const { StDeviceStatus } = JSON.parse(stateJson)
 
                 if (StDeviceStatus !== STATUS.HEALTHY) {
-                    return Promise.reject()
+                    return Promise.reject(`${_NAME}状态：${StDeviceStatus}`)
                 }
 
                 return Promise.resolve()
             } catch (e) {
-                return Promise.reject()
+                return Promise.reject(`${_NAME}状态：解析异常`)
             }
         },
-        // 检查
-        async isCheckinOk({ dispatch }) {
+        async [_CHECK_]({ dispatch }) {
             try {
-                await dispatch('openCheckin')
-                await dispatch('takeCheckinState')
+                await dispatch(_OPEN_)
+                await dispatch(_LOOK_)
+                dispatch('putIssue', [_TYPE, STATUS_OK])
                 return Promise.resolve()
             } catch (e) {
-                return Promise.reject()
+                dispatch('putIssue', [_TYPE, STATUS_ERROR, e])
+                return Promise.reject(e)
             }
         },
 
@@ -138,7 +140,7 @@ const returnBox = {
 
             return p
         },
-        async doCheckin({ dispatch, commit, state }) {
+        async doCheckin({ dispatch }) {
             /** 检查读卡器 */
             try {
                 await dispatch('isCheckinOk')

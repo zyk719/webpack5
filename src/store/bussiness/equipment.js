@@ -162,11 +162,19 @@ const equipment = {
                 const type = `set${key}ControllerSubscriber`
                 commit(type, controller)
             })
+            // todo 同时打开，逐一上报
+            dispatch('startSensor')
+            dispatch('isCardReaderOk')
+            dispatch('isCheckoutOk')
+            dispatch('isCheckinOk')
+            dispatch('isPrinterOk')
+
+            // todo 定时上报
 
             // 感应器开始监听
-            setTimeout(() => {
-                dispatch('startSensor')
-            }, 2000)
+            // setTimeout(() => {
+            //     dispatch('startSensor')
+            // }, 2000)
         },
         async initX({ dispatch, commit, state }) {
             commit('setConnecting', true)
