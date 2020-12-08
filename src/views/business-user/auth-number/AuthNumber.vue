@@ -114,9 +114,11 @@ export default {
                     freeze_amount: fm,
                     tea_area,
                 } = this.userCurrentNumber
+                const fmt = 'yyyy-MM-dd HH:mm:ss'
                 const content =
-                    '*********************************************' +
                     '\n' +
+                    '*********************************************' +
+                    '\n\n' +
                     `   茶 农 编 号：${grower_code}\n\n` +
                     `   茶 农 姓 名：${grower_name}\n\n` +
                     `   核 准 标 量：${all_amount / 1000 || 0}kg\n\n` +
@@ -126,10 +128,9 @@ export default {
                         fm / 1000 || 0
                     }kg）\n\n` +
                     `   茶 地 面 积：${tea_area || 0} 亩\n\n` +
-                    `   查 询 时 间：${dateFormat(
-                        'yyyy-MM-dd HH:mm:ss',
-                        new Date()
-                    )}\n`
+                    `   查 询 时 间：${dateFormat(fmt, new Date())}\n\n` +
+                    '*********************************************' +
+                    '\n'
 
                 this.$store.dispatch('lightPrinter')
                 const res = await this.$store.dispatch('doPrint', {

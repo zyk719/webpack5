@@ -57,7 +57,7 @@ async function getVersion() {
 
 function routerGuard(router) {
     router.beforeEach(async (to, from, next) => {
-        log(from.path, to.path)
+        // log(from.path, to.path)
         NProgress.done()
 
         /** 0. 刷新页面：对应业务逻辑 */
@@ -112,23 +112,37 @@ function routerGuard(router) {
             )
         }
 
-        /** 2. need QWebBridge OK */
+        /** 2. 需要 QWebBridge 连接 */
         const needEquipmentPage = NEED_EQUIPMENT_PAGE_ARR.includes(to.path)
         if (needEquipmentPage) {
-            // 正在连接
-            const isConnecting = store.state.equipment.connecting
-            if (isConnecting) {
+            /**
+             * 正在连接
+             * 1. 提示
+             * 2. 修改目标页
+             * 3. 保留在当前页
+             */
+            if (store.state.equipment.connecting) {
+                Message.destroy()
                 Message.info('QWebBridge 正在连接中...')
+
                 store.commit('setToPath', to.path)
-                return next(from.path)
+
+                return
             }
-            // 未连接
-            const QWebBridgeConnected = store.state.equipment.connected
-            if (!QWebBridgeConnected) {
+            /**
+             * 未连接
+             * 1. 提示
+             * 2. 保存目标页路由、重新发起 QWebBridge 连接
+             * 3. 保留在当前页
+             */
+            if (!store.state.equipment.connected) {
+                Message.destroy()
                 Message.info('QWebBridge 未连接。正在尝试重连...')
+
                 store.commit('setToPath', to.path)
                 store.dispatch('initX')
-                return next(from.path)
+
+                return
             }
         }
 
@@ -145,15 +159,25 @@ function routerGuard(router) {
 
             // 未登录且前往登录页，同步调用
             if (!loginStatus && to.path === '/user/login') {
-                // 0. 读卡器状态查询 todo 本地开发时注释 0
-                try {
-                    await store.dispatch('isCardReaderOk')
-                } catch (e) {
+                // 读卡器打开状态查询
+                if (!store.state.customer.statusNodes.open) {
                     Message.destroy()
-                    Message.warning('读卡器异常，本机暂时无法为您提供服务。')
-                    return next('/user/crossroad')
+                    Message.info('正在连接读卡器...')
+                    store.commit('setToPath', to.path)
+                    return
                 }
-                // 1. 设备异常查询
+
+                // 读卡器状态查询 todo 本地开发时注释 0
+                // try {
+                //     await store.dispatch('isCardReaderOk')
+                // } catch (e) {
+                //     console.error(e)
+                //     Message.destroy()
+                //     Message.error('读卡器异常，本机暂时无法为您提供服务。')
+                //     return next('/user/crossroad')
+                // }
+
+                // 服务器查询设备状态
                 try {
                     await equipmentStatus({})
                 } catch (e) {
@@ -207,7 +231,7 @@ function routerGuard(router) {
         const isToAdminLogin = isAdminLogin && to.path === '/admin/login'
         const isToUserLogin = isUserLogin && to.path === '/user/login'
         if (isToAdminLogin || isToUserLogin) {
-            return next(from.path)
+            return
         }
 
         /** 针对性设备检查页 */
@@ -224,16 +248,16 @@ function routerGuard(router) {
         }
 
         // 2. 退标器 /user/back todo 本地开发时注释：测退标
-        const loginAndToBack =
-            loginStatus === USER_LOGIN_STATUS_NAME && to.path === '/user/back'
-        if (loginAndToBack) {
-            try {
-                await store.dispatch('isCheckinOk')
-            } catch (e) {
-                Message.error('退标器异常')
-                return next('/user/crossroad')
-            }
-        }
+        // const loginAndToBack =
+        //     loginStatus === USER_LOGIN_STATUS_NAME && to.path === '/user/back'
+        // if (loginAndToBack) {
+        //     try {
+        //         await store.dispatch('isCheckinOk')
+        //     } catch (e) {
+        //         Message.error('退标器异常')
+        //         return next('/user/crossroad')
+        //     }
+        // }
 
         /** 5. 无需捕获条件 */
         NProgress.start()

@@ -1,4 +1,10 @@
-/** 读卡器模块 */
+/**
+ * 用户登录模块，包含：
+ * 读卡器控制器
+ * 用户登录退出逻辑
+ * 流程图见：cardReader_process.jpg
+ */
+
 import router from '@/router'
 
 /** helpers */
@@ -16,27 +22,29 @@ import {
     pResRej,
     backHome,
 } from '@/store/bussiness/common'
-import { TYPE_IDC, STATUS_OK, STATUS_ERROR } from '@/libs/constant'
 
-/** 接口 */
+/** api */
 import {
     supplyBaseCall,
     userLoginCall,
     userLogoutCall,
 } from '@/api/bussiness/user'
 
-const _TYPE = TYPE_IDC
+/** module constant */
 const _NAME = '读卡器'
 const _NAME_ENG = 'CardReader'
 const _NAME_LOGIC = LOGIC_NAME.IDC
 const _INIT_ = `set${_NAME_ENG}ControllerSubscriber`
 const _OPEN_ = `open${_NAME_ENG}`
-const _LOOK_ = `take${_NAME_ENG}State`
 const _CHECK_ = `is${_NAME_ENG}Ok`
 const xLog = log.bind(null, _NAME)
-
 export const USER_LOGIN_STATUS_NAME = 'userLogin'
 
+/**
+ * buildReadCardParams
+ * @desc 返回读卡器读卡时的参数
+ * @returns {(string|number|*)[]}
+ */
 function buildReadCardParams() {
     const removeSplit = (str) => str.replace('/,/g', '').replace(/ /g, '')
     const token = '?'
@@ -46,24 +54,70 @@ function buildReadCardParams() {
     return [token, protocol, removeSplit(bytes)]
 }
 
-// read(get code) => login(get userCode) => userInfo
+let subscriber
+
 const cardReader = {
     state: {
         controller: {},
-        subscriber: {},
         code: '',
         info: {},
+        /**
+         * 领标时
+         * 用于防止茶农卡被取走
+         * checkoutLoading：正在出标
+         * takenCardCheckout：出标时卡被取走
+         */
         checkoutLoading: false,
         takenCardCheckout: false,
+        /**
+         * 退标时
+         * 用于防止茶农卡被取走
+         * checkinLoading：正在退标
+         * takenCardCheckin：退标时卡被取走
+         */
         checkinLoading: false,
         takenCardCheckin: false,
+        /**
+         * 状态节点
+         * 标记注入
+         * 标记读卡器打开
+         */
+        statusNodes: {
+            inject: false,
+            open: false,
+        },
+        /**
+         * 流程节点
+         * 等待放卡
+         * 等待读卡
+         * 等待拿卡
+         */
+        processNodes: {
+            forPut: false,
+            forRead: false,
+            forTake: false,
+        },
+        /**
+         * 目标页：QWebBridge 已连接
+         * 用于登录后保持跳转
+         */
         fromPath: '',
+        /**
+         * 目标页：QWebBridge 未连接
+         * 用于 QWebBridge 连接，CardReader 打开后保持跳转
+         */
+        toPath: undefined,
     },
     getters: {},
     mutations: {
+        // 控制器初始化
+        // 发布订阅中心初始化
         [_INIT_](state, controller) {
             state.controller = controller
-            state.subscriber = new EventNotifiers(state.controller)
+            subscriber = new EventNotifiers(state.controller)
+
+            // 状态登记
+            state.statusNodes.inject = true
         },
         setUserCode(state, { code }) {
             state.code = code
@@ -95,134 +149,190 @@ const cardReader = {
             state.takenCardCheckin = false
             state.fromPath = ''
         },
+        transferStatus(state, [node, status = true]) {
+            Object.keys(state.processNodes).forEach(
+                (key) => (state.processNodes[key] = false)
+            )
+            node && (state.processNodes[node] = status)
+        },
+        setToPath(state, toPath) {
+            state.toPath = toPath
+        },
     },
     actions: {
-        /** hardware */
-        [_OPEN_]({ state }) {
-            const { p, res, rej } = pResRej()
-            state.subscriber.removeAll()
-            /** todo 注册所有事件 */
+        /** hardware **/
+        // 打开读卡器
+        [_OPEN_]({ state, dispatch, commit }) {
+            subscriber.removeAll()
 
-            // success
-            state.subscriber.add('OpenCompleted', res)
-            state.subscriber.add('ConnectionOpened', res)
+            /** 注册所有事件 **/
 
-            // error
-            state.subscriber.add('DeviceError', () =>
-                rej(`${_NAME}打开：'DeviceError'`)
-            )
-            state.subscriber.add('FatalError', () =>
-                rej(`${_NAME}打开：'FatalError'`)
-            )
-            state.subscriber.add('Timeout', () =>
-                rej(`${_NAME}打开：'Timeout'`)
-            )
+            /**
+             * OpenCompleted
+             * 连接读卡器：无设备也可以连接，不会报异常
+             * 首次连接时才会触发
+             */
+            let isFirst = false
+            subscriber.add('OpenCompleted', (res) => {
+                xLog('OpenCompleted    回调，返回值：', res)
+                isFirst = true
+            })
 
-            // business waiting for card
+            /**
+             * ConnectionOpened
+             * 首次连接和再次连接均会被调用
+             * 首次连接时会调用 8 次，具体看图片：cardReader_websocket_open.png
+             */
+            let count = 0
+            subscriber.add('ConnectionOpened', (res) => {
+                xLog('ConnectionOpened 回调，返回值：', res)
+                isFirst || (state.statusNodes.open = true)
+
+                /** 重连后页面跳转 todo 调用 8 次行为是否稳定 */
+                count++
+                if (count === 8 && state.toPath) {
+                    state.statusNodes.open = true
+                    setTimeout(() => {
+                        router
+                            .push(state.toPath)
+                            .then(() => commit('setToPath', undefined))
+                    }, 99)
+                }
+            })
+
+            /**
+             * DeviceError | FatalError
+             * 异常监听：
+             * 因为使用前有设备状态查询，这两个回调使用较少
+             */
+            subscriber.add('DeviceError', (res) => {
+                xLog('DeviceError', res)
+            })
+            subscriber.add('FatalError', (res) => {
+                xLog('FatalError', res)
+            })
+
+            /**
+             * Timeout
+             * 超时逻辑：
+             * 等待放卡时，超时返回首页
+             */
+            subscriber.add('Timeout', (res) => {
+                xLog('Timeout          回调，返回值：', res)
+                if (state.processNodes.forPut) {
+                    speakMsg('warning', '未在指定时间内放卡')
+                    return backHome()
+                }
+            })
+
+            // 等待放卡
             // 回调执行顺序：
             // 1. 传入的回调函数，在此函数最下面
             // 2. CardInserted
-            // 3. ChipDataReceived: WFS_CMD_IDC_READ_RAW_DATA
+            // 3. ChipDataReceived: WFS_CMD_IDC_READ_RAW_DATA WFS_CMD_IDC_CHIP_IO
             // 4. CardAccepted
-            state.subscriber.add('CardInserted', res)
-            state.subscriber.add('ChipDataReceived', res)
-            state.subscriber.add('CardAccepted', res)
+            subscriber.add('CardInserted', (res) => {
+                xLog('CardInserted     回调，返回值：', res)
+            })
+            subscriber.add('ChipDataReceived', (res) => {
+                xLog('ChipDataReceived 回调，返回值：', res)
+            })
+            subscriber.add('CardAccepted', (res) => {
+                xLog('CardAccepted     回调，返回值：', res)
+                commit('transferStatus', ['forRead'])
+                dispatch('read')
+            })
+
+            // 卡被取走：等待放卡超时会被调用
+            subscriber.add('CardTaken', (res) => {
+                xLog('CardTaken        回调，返回值：', res)
+                if (state.processNodes.forTake) {
+                    dispatch('takeIcCardCb')
+                }
+                commit('transferStatus')
+            })
+
+            // 非法卡
+            subscriber.add('CardInvalid', (res) => {
+                xLog('CardInvalid      回调，返回值：', res)
+                Message.destroy()
+                speakMsg('error', '请使用茶农卡登录')
+                commit('transferStatus')
+                return backHome()
+            })
 
             state.controller[API.CONNECT](_NAME_LOGIC, TIMEOUT.CONNECT)
-
-            return p
         },
-        [_LOOK_]({ state }) {
+        // 读卡器状态检查
+        [_CHECK_]({ state }) {
             const stateJson = state.controller.strState
-
+            let o = null
             try {
-                const { StDeviceStatus } = JSON.parse(stateJson)
-
-                if (StDeviceStatus !== STATUS.HEALTHY) {
-                    return Promise.reject(`${_NAME}状态：${StDeviceStatus}`)
-                }
-
-                return Promise.resolve()
+                o = JSON.parse(stateJson)
             } catch (e) {
-                return Promise.reject(`${_NAME}状态：解析异常`)
+                return Promise.reject(`${_NAME}状态解析异常`)
             }
-        },
-        async [_CHECK_]({ dispatch }) {
-            try {
-                await dispatch(_OPEN_)
-                await dispatch(_LOOK_)
-                dispatch('putIssue', [_TYPE, STATUS_OK])
-                return Promise.resolve()
-            } catch (e) {
-                dispatch('putIssue', [_TYPE, STATUS_ERROR, e])
-                return Promise.reject(e)
+            if (o.StDeviceStatus !== STATUS.HEALTHY) {
+                return Promise.reject(`${_NAME}状态：${o.StDeviceStatus}`)
             }
-        },
 
+            return Promise.resolve()
+        },
         // 监听放卡
-        addEventListenerPut({ state }) {
+        addEventListenerPut({ state, commit }) {
             const { p, res, rej } = pResRej()
-
-            state.subscriber.removeAll()
-
-            /** success */
-            // 正确回调执行顺序：
-            // 1. 传入的回调函数，在此函数最下面
-            // 2. CardInserted
-            // 3. ChipDataReceived: WFS_CMD_IDC_READ_RAW_DATA
-            // 4. CardAccepted
-            state.subscriber.add('CardInserted', res)
-            state.subscriber.add('ChipDataReceived', res)
-            state.subscriber.add('CardAccepted', res)
-
-            /** equipment error */
-            state.subscriber.add('FatalError', () =>
-                rej('读卡器异常：FatalError')
-            )
-            state.subscriber.add('DeviceError', () =>
-                rej('读卡器异常：DeviceError')
-            )
-
-            /** timeout */
-            state.subscriber.add('Timeout', () => rej('未在指定时间内放卡'))
-
-            /** Invalid */
-            state.subscriber.add('CardInvalid', () => rej('请放置正确的茶农卡'))
 
             state.controller[API.INSERT](
                 LOGIC_NAME.IDC_TRACK_MAP,
-                TIMEOUT.INSERT
-                // (ret) => xLog(ret)
+                TIMEOUT.INSERT,
+                (ret) => {
+                    if (ret === '0') {
+                        commit('transferStatus', ['forPut'])
+                        res()
+                    } else {
+                        rej()
+                    }
+                }
             )
 
             return p
         },
         // 读卡
-        read({ state, dispatch }) {
-            const { p, res, rej } = pResRej()
-
-            state.subscriber.removeAll()
-
-            /** success(目前未用到，先注释) */
-            // 返回值：WFS_CMD_IDC_READ_RAW_DATA、WFS_CMD_IDC_CHIP_IO
-            // state.subscriber.add('ChipDataReceived')
-
-            /** failed */
-            state.subscriber.add('Timeout', rej)
-            state.subscriber.add('DeviceError', rej)
-            state.subscriber.add('FatalError', rej)
-            /** 卡被取走 */
-            state.subscriber.add('CardTaken', () => {
-                dispatch('takeIcCardCb')
-            })
-
+        read({ state, dispatch, commit }) {
             state.controller[API.READ](
                 ...buildReadCardParams(),
                 TIMEOUT.READ,
-                res
-            )
+                (resJson) => {
+                    let res
+                    try {
+                        res = JSON.parse(resJson)
+                    } catch (e) {
+                        console.error('卡内容无法解析', e)
+                        return backHome()
+                    }
 
-            return p
+                    const { sResult, Data } = res
+                    if (sResult === 0) {
+                        const codeStr = String.fromCodePoint(...Data)
+                        const code = codeStr.substr(23, 22)
+                        if (code === '') {
+                            Message.error('无效卡')
+                            return backHome()
+                        }
+                        commit('transferStatus', ['forTake'])
+                        dispatch('getIcCardCodeCb', code)
+                    } else {
+                        console.error(
+                            '读卡异常',
+                            'sResult',
+                            sResult,
+                            'Data',
+                            Data
+                        )
+                        return backHome()
+                    }
+                }
+            )
         },
         // 执行读卡操作
         async forInsert({ dispatch }) {
@@ -230,7 +340,8 @@ const cardReader = {
             try {
                 await dispatch('isCardReaderOk')
             } catch (e) {
-                Message.warning('读卡器异常，本机暂时无法为您提供服务。')
+                console.error(e)
+                Message.error('读卡器异常，本机暂时无法为您提供服务。')
                 return
             }
 
@@ -240,37 +351,16 @@ const cardReader = {
                 lightTimeId = setTimeout(dispatch, 2000, 'lightIdc')
                 await dispatch('addEventListenerPut')
             } catch (e) {
-                Message.warning(e)
+                Message.error(e)
                 return backHome()
             } finally {
                 // 灯光关闭
                 clearTimeout(lightTimeId)
                 setTimeout(dispatch, 1000, 'closeIdc')
             }
-
-            /** 3. 读卡 */
-            try {
-                const res = await dispatch('read')
-                try {
-                    const digitalCode = JSON.parse(res).Data
-                    const codeStr = String.fromCodePoint(...digitalCode)
-                    const code = codeStr.substr(23, 22)
-                    if (code === '') {
-                        Message.error('无效卡')
-                        return backHome()
-                    }
-                    dispatch('getIcCardCodeCb', code)
-                } catch (e) {
-                    console.error('卡内容无法解析')
-                    return backHome()
-                }
-            } catch (e) {
-                Message.error('读卡异常')
-                return backHome()
-            }
         },
 
-        /** hardware -> business */
+        /** hardware -> business **/
         // 读卡完成
         getIcCardCodeCb({ dispatch }, ic_code) {
             dispatch('userLogin', ic_code)
@@ -295,7 +385,7 @@ const cardReader = {
             dispatch('userLogout')
         },
 
-        /** business */
+        /** business **/
         // 登录
         async userLogin({ commit, dispatch, state }, ic_code) {
             const params = { ic_code }
@@ -328,6 +418,7 @@ const cardReader = {
                 // 登录操作时，跳转且提示
                 const isLoginPage = router.app.$route.path === '/user/login'
                 if (isLoginPage) {
+                    Message.destroy()
                     Message.success({
                         content: msg,
                         duration: 1.5,

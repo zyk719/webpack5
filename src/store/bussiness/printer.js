@@ -89,7 +89,7 @@ const printer = {
         },
 
         // 打印
-        print({ state, dispatch }, { action, content, type = '茶农' }) {
+        print({ state, dispatch }, { action, content }) {
             const { p, res, rej } = pResRej()
 
             state.subscriber.removeAll()
@@ -101,9 +101,9 @@ const printer = {
             )
 
             const printText =
-                `R10=<西湖龙井${type}自助机${action}凭证>` +
+                `R10=<西湖龙井茶${action}凭证>` +
                 `,R11=<${content}>` +
-                ',R12=<*********************************************\n客服服务电话：0571-87758190>'
+                ',R12=<客服服务电话：0571-87758190/n/n>'
             const params = [
                 // FormName
                 'ReceiptForm',

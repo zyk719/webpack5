@@ -159,9 +159,9 @@
             </div>
         </div>
         <div style="text-align: center">
-            <AioBtn :cancel="true" :disabled="loading" @click="handleBack">
-                返回首页
-            </AioBtn>
+            <AioBtn :cancel="true" :disabled="loading" @click="handleBack"
+                >返回首页</AioBtn
+            >
             <AioBtn v-show="status.fill" @click="confirm">申领茶标</AioBtn>
             <AioBtn
                 v-show="
@@ -170,28 +170,27 @@
                 @click="backEdit"
                 :cancel="true"
                 :disabled="loading"
+                >返回修改</AioBtn
             >
-                返回修改
-            </AioBtn>
             <AioBtn
                 v-show="status.confirm"
                 @click="submitSupply"
                 :loading="loading"
+                >确认申领</AioBtn
             >
-                确认申领
-            </AioBtn>
             <!-- 打印凭证 -->
-            <AioBtn v-show="status.success && !printed" @click="handlePrint">
-                凭条打印
-            </AioBtn>
+            <AioBtn v-show="status.success && !printed" @click="handlePrint"
+                >凭条打印</AioBtn
+            >
             <!-- 出标时茶农卡被取走，不能再领取下一笔 -->
             <AioBtn
                 v-show="status.success && !takenCardCheckout"
                 @click="refill"
+                >再领一笔</AioBtn
             >
-                再领一笔
-            </AioBtn>
         </div>
+
+        <!-- 状态查询蒙层 -->
         <Spin fix v-if="$store.state.cache.getOpenStatusLoading">
             <Icon class="demo-spin-icon-load" type="ios-loading" :size="50" />
             <div>领标开放状态查询中...</div>
@@ -205,7 +204,7 @@ import AioInputNumber from '@/views/components/AioInputNumber'
 import AioBtn from '@/views/components/AioBtn'
 
 import { getBoxCall, putTakeCall } from '@/api/bussiness/user'
-import { log, speakMsg } from '@/libs/treasure'
+import { dateFormat, log, speakMsg } from '@/libs/treasure'
 import store from '@/store'
 
 const defaultParams = () => ({
@@ -257,6 +256,7 @@ export default {
                 },
             ],
             printed: false,
+            apply_code: '',
         }
     },
     computed: {
@@ -298,12 +298,18 @@ export default {
     mounted() {
         this.init()
     },
+    beforeDestroy() {
+        this.end()
+    },
     methods: {
         init() {
             this.getSysDd()
             Object.keys(this.info).length > 0 && this.fillFirstSpecs()
             // 重新查询茶农申领退状态
             this.$store.dispatch('getCheckoutCheckinStatus')
+        },
+        end() {
+            this.apply_code = ''
         },
 
         /** helpers */
@@ -340,16 +346,25 @@ export default {
         /** 用户事件 */
         async handlePrint() {
             this.printed = true
+            const { grower_name, grower_code, valid_amount } = this.info
             const { specifications, apply_num } = this.params
             // 数量、时间、订单号、标题
+            const fmt = 'yyyy-MM-dd HH:mm:ss'
+            const content =
+                '\n' +
+                '*********************************************' +
+                '\n\n' +
+                `   茶 农 编 号：${grower_code}\n\n` +
+                `   茶 农 姓 名：${grower_name}\n\n` +
+                `   申领 茶标数：${specifications}g * ${apply_num}枚\n\n` +
+                `   剩余 电子量：${valid_amount / 1000}kg\n\n` +
+                `   申领 单编号：${this.apply_code}\n\n` +
+                `   申 领 时 间：${dateFormat(fmt, new Date())}\n\n` +
+                '*********************************************' +
+                '\n'
             const res = await this.$store.dispatch('doPrint', {
-                title: '领标凭条',
-                time: '2020/11/25',
-                content: `
-                    规格：${specifications}
-                    标量：${apply_num}
-                    总量：${apply_num * Number(specifications)}克
-                `,
+                action: '申领',
+                content,
             })
             speakMsg('success', `${res}，请取走凭条`)
         },
@@ -416,7 +431,8 @@ export default {
                 )
                 return
             }
-            const { apply_id, equipmentbox_id, box_code } = boxInfo
+            const { apply_code, apply_id, equipmentbox_id, box_code } = boxInfo
+            this.apply_code = apply_code
 
             /** 接口完成后，茶农申请的茶标量已被冻结 */
 
@@ -503,11 +519,12 @@ export default {
             params.equ_user_code = this.$store.state.customer.code
             const {
                 obj: {
+                    apply_code,
                     apply_id,
                     boxInfo: [{ equipmentbox_id, box_code }],
                 },
             } = await getBoxCall(params)
-            return { apply_id, equipmentbox_id, box_code }
+            return { apply_code, apply_id, equipmentbox_id, box_code }
         },
         // 2. 提交出标信息
         async putSign(apply_id, equipmentbox_id, sign) {

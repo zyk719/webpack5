@@ -120,18 +120,21 @@
                 :disabled="loading"
                 :cancel="true"
                 @click="handleBack"
-                >返回首页
-            </AioBtn>
+                >返回首页</AioBtn
+            >
             <AioBtn v-show="status.warn" @click="statusTransfer('back')"
-                >我已知晓
-            </AioBtn>
+                >我已知晓</AioBtn
+            >
             <AioBtn v-show="status.back" :loading="loading" @click="startBack"
-                >开始退标
-            </AioBtn>
+                >开始退标</AioBtn
+            >
             <!-- todo 用户忘记点完成退标，需自动提交：用户取走茶农卡时，如果在退标页且未提交 -->
             <AioBtn v-show="status.submit" :loading="loading" @click="doSubmit"
-                >完成退标
-            </AioBtn>
+                >完成退标</AioBtn
+            >
+            <AioBtn v-show="!printed && status.success" @click="handlePrint"
+                >凭条打印</AioBtn
+            >
             <AioBtn
                 v-show="
                     status.success && !$store.state.customer.takenCardCheckin
@@ -140,6 +143,8 @@
                 >再退一笔</AioBtn
             >
         </div>
+
+        <!-- 状态查询蒙层 -->
         <Spin fix v-if="$store.state.cache.getOpenStatusLoading">
             <Icon class="demo-spin-icon-load" type="ios-loading" :size="50" />
             <div>退标开放状态查询中...</div>
@@ -153,6 +158,7 @@ import AioBtn from '@/views/components/AioBtn'
 
 import { putBackBoxCall, submitBackCall } from '@/api/bussiness/user'
 import returnBox from '@/store/bussiness/returnBox'
+import { dateFormat, speakMsg } from '@/libs/treasure'
 
 export default {
     name: 'AuthBack',
@@ -173,6 +179,7 @@ export default {
             loading: false,
             returnNum: 0,
             checkinBoxInfo: {},
+            printed: false,
         }
     },
     computed: {
@@ -213,6 +220,45 @@ export default {
         /** helpers */
 
         /** 用户事件 */
+        async handlePrint() {
+            this.printed = true
+            const { grower_name, grower_code } = this.info
+
+            let backDetail = ''
+            let num = 2
+            while (num--) {
+                backDetail +=
+                    `     退标单号：ZZTB2020112515503376973\n\n` +
+                    `     茶农编号：134523    茶农姓名：测试人员\n\n` +
+                    `     退标数量：250g * 30枚\n\n` +
+                    `     退标序号：\n\n` +
+                    `       90012288; 90012289; 90012290\n\n` +
+                    `       90012291; 90012292; 90012293\n\n`
+                if (num >= 1) {
+                    backDetail +=
+                        '---------------------------------------------\n\n'
+                }
+            }
+            // 数量、时间、订单号、标题
+            const fmt = 'yyyy-MM-dd HH:mm:ss'
+            const content =
+                '\n' +
+                '*********************************************' +
+                '\n\n' +
+                `   茶 农 编 号：${grower_code}\n\n` +
+                `   茶 农 姓 名：${grower_name}\n\n` +
+                `   退 标 时 间：${dateFormat(fmt, new Date())}\n\n` +
+                `   退 标 明 细：\n\n` +
+                backDetail +
+                '*********************************************' +
+                '\n'
+            console.log(content)
+            const res = await this.$store.dispatch('doPrint', {
+                action: '申领',
+                content,
+            })
+            speakMsg('success', `${res}，请取走凭条`)
+        },
         handleBack() {
             // todo 判断是否正在进标
 

@@ -24,10 +24,6 @@ import { ADMIN_LOGIN_STATUS_NAME, login, logout } from '@/api/app/user'
 const equipment = {
     state: {
         /**
-         * 目标页，在设备未就绪时前往会保存
-         */
-        toPath: undefined,
-        /**
          * 正在连接到 QWebBridge
          */
         connecting: true,
@@ -67,9 +63,6 @@ const equipment = {
         },
     },
     mutations: {
-        setToPath(state, toPath) {
-            state.toPath = toPath
-        },
         setConnecting(state, status) {
             state.connecting = status
         },
@@ -162,12 +155,14 @@ const equipment = {
                 const type = `set${key}ControllerSubscriber`
                 commit(type, controller)
             })
+            // Object.keys(controllers).forEach((key) => dispatch(`open${key}`))
             // todo 同时打开，逐一上报
-            dispatch('startSensor')
-            dispatch('isCardReaderOk')
-            dispatch('isCheckoutOk')
-            dispatch('isCheckinOk')
-            dispatch('isPrinterOk')
+            dispatch('openCardReader')
+            // dispatch('startSensor')
+            // dispatch('isCardReaderOk')
+            // dispatch('isCheckoutOk')
+            // dispatch('isCheckinOk')
+            // dispatch('isPrinterOk')
 
             // todo 定时上报
 
@@ -231,12 +226,6 @@ const equipment = {
 
             /** 4. controller */
             dispatch('setController')
-
-            /** 5. 存在需要跳转页面，跳转 */
-            if (state.toPath) {
-                await router.push(state.toPath)
-                commit('setToPath', undefined)
-            }
         },
         async getEquipmentInfo({ commit }) {
             const { obj } = await getEquipmentInfoCall({})
