@@ -76,7 +76,7 @@
         </div>
         <div style="text-align: center">
             <AioBtn :cancel="true" @click="handleBack"> 返回首页 </AioBtn>
-            <AioBtn @click="handlePrint"> 凭条打印 </AioBtn>
+            <AioBtn v-if="!printed" @click="handlePrint"> 凭条打印 </AioBtn>
         </div>
     </div>
 </template>
@@ -85,10 +85,16 @@
 import UserAuthTitle from '@/views/components/UserAuthTitle'
 import AioBtn from '@/views/components/AioBtn'
 import { speakMsg, dateFormat } from '@/libs/treasure'
+import printer from '@/store/bussiness/printer'
 
 export default {
     name: 'AuthNumber',
     components: { UserAuthTitle, AioBtn },
+    data() {
+        return {
+            printed: false,
+        }
+    },
     computed: {
         userCurrentNumber() {
             return this.$store.state.cache.userCurrentNumber
@@ -104,6 +110,9 @@ export default {
         },
         // 凭条打印
         async handlePrint() {
+            // todo 进页面打印机不能用，按钮置灰
+            this.printed = true
+
             try {
                 const { grower_name, grower_code } = this.info
                 const {
@@ -115,10 +124,15 @@ export default {
                     tea_area,
                 } = this.userCurrentNumber
                 const fmt = 'yyyy-MM-dd HH:mm:ss'
+
+                /**
+                 * 打印参数
+                 * 1. 打印行为：action = 查询
+                 * 2. 打印内容：content
+                 */
+                const action = '查询'
                 const content =
-                    '\n' +
-                    '*********************************************' +
-                    '\n\n' +
+                    '\n*********************************************\n\n' +
                     `   茶 农 编 号：${grower_code}\n\n` +
                     `   茶 农 姓 名：${grower_name}\n\n` +
                     `   核 准 标 量：${all_amount / 1000 || 0}kg\n\n` +
@@ -128,24 +142,14 @@ export default {
                         fm / 1000 || 0
                     }kg）\n\n` +
                     `   茶 地 面 积：${tea_area || 0} 亩\n\n` +
-                    `   查 询 时 间：${dateFormat(fmt, new Date())}\n\n` +
-                    '*********************************************' +
-                    '\n'
+                    `   查 询 时 间：${dateFormat(fmt, new Date())}` +
+                    '\n\n*********************************************\n'
 
-                this.$store.dispatch('lightPrinter')
-                const res = await this.$store.dispatch('doPrint', {
-                    action: '查询',
-                    content,
-                })
-                speakMsg('success', `${res}，请取走凭条`)
-                // todo 打印全局控制
-                // todo 检查打印机状态，不能用时置灰按钮
+                const params = { action, content }
+                await this.$store.dispatch('doPrint', params)
+                speakMsg('success', '打印完成，请取走凭条')
             } catch (e) {
                 console.error(e)
-            } finally {
-                setTimeout(() => {
-                    this.$store.dispatch('closePrinterLight')
-                }, 1000)
             }
         },
     },

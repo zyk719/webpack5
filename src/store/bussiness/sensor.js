@@ -9,89 +9,101 @@ import {
     STATUS,
     TIMEOUT,
 } from '@/store/bussiness/common'
-import store from '../index'
-import { TYPE_SENSOR, STATUS_OK, STATUS_ERROR } from '@/libs/constant'
 
-const _TYPE = TYPE_SENSOR
 const _NAME = '感应器'
 const _NAME_ENG = 'Sensor'
 const _NAME_LOGIC = LOGIC_NAME.SENSOR
 const _INIT_ = `set${_NAME_ENG}ControllerSubscriber`
 const _OPEN_ = `open${_NAME_ENG}`
-const _LOOK_ = `take${_NAME_ENG}State`
 const _CHECK_ = `is${_NAME_ENG}Ok`
 const xLog = log.bind(null, _NAME)
+
+let subscriber
 
 const sensor = {
     state: {
         controller: {},
-        subscriber: {},
+        /**
+         * 状态节点
+         * 标记注入
+         * 标记读卡器打开
+         */
+        statusNodes: {
+            inject: false,
+            open: false,
+        },
     },
     getters: {},
     mutations: {
         [_INIT_](state, controller) {
             state.controller = controller
-            state.subscriber = new EventNotifiers(state.controller)
+            subscriber = new EventNotifiers(state.controller)
+
+            // 状态登记
+            state.statusNodes.inject = true
         },
     },
     actions: {
         /** hardware */
-        [_OPEN_]({ state }) {
-            const { p, res, rej } = pResRej()
+        // 打开感应器
+        [_OPEN_]({ state, dispatch }) {
+            subscriber.removeAll()
 
-            state.subscriber.removeAll()
-            // success
-            state.subscriber.add('OpenCompleted', res)
-            state.subscriber.add('ConnectionOpened', res)
-            // failed
-            state.subscriber.add('DeviceError', () =>
-                rej(`${_NAME}打开：'DeviceError'`)
-            )
-            state.subscriber.add('FatalError', () =>
-                rej(`${_NAME}打开：'FatalError'`)
-            )
-            state.subscriber.add('Timeout', () =>
-                rej(`${_NAME}打开：'Timeout'`)
-            )
+            /** 注册所有事件 **/
 
-            state.controller[API.CONNECT](_NAME_LOGIC, TIMEOUT.CONNECT)
+            /**
+             * OpenCompleted
+             * 连接领标器：无设备不可连接，走 FatalError 回调 -43
+             * 首次连接时才会触发
+             */
+            let isFirst = false
+            subscriber.add('OpenCompleted', (res) => {
+                xLog('OpenCompleted    回调，返回值：', res)
+                isFirst = true
+            })
 
-            return p
-        },
-        [_LOOK_]({ state }) {
-            const stateJson = state.controller.strState
+            /**
+             * ConnectionOpened
+             * 首次连接和再次连接均会被调用
+             */
+            subscriber.add('ConnectionOpened', (res) => {
+                xLog('ConnectionOpened 回调，返回值：', res)
+                state.statusNodes.open = true
 
-            try {
-                const { StDeviceStatus } = JSON.parse(stateJson)
+                setTimeout(() => {
+                    dispatch('startSensor')
 
-                if (StDeviceStatus !== STATUS.HEALTHY) {
-                    return Promise.reject(`${_NAME}状态：${StDeviceStatus}`)
-                }
+                    if (isFirst) {
+                        xLog(JSON.parse(state.controller.strState))
+                    }
+                }, 99)
+            })
 
-                return Promise.resolve()
-            } catch (e) {
-                return Promise.reject(`${_NAME}状态：解析异常`)
-            }
-        },
-        async [_CHECK_]({ dispatch }) {
-            try {
-                await dispatch(_OPEN_)
-                await dispatch(_LOOK_)
-                dispatch('putIssue', [_TYPE, STATUS_OK])
-                return Promise.resolve()
-            } catch (e) {
-                dispatch('putIssue', [_TYPE, STATUS_ERROR, e])
-                return Promise.reject(e)
-            }
-        },
+            /**
+             * DeviceError
+             * 在出标时会报异常，可通过 state.customer.checkoutLoading 判断
+             * 且异常后，ReadImageComplete 回调不会再被调用
+             * 1. todo 手动上报异常
+             * 2. 关灯
+             * 3. 返回首页
+             * */
+            subscriber.add('DeviceError', (res) => {
+                xLog('DeviceError      回调，返回值：', res)
+            })
 
-        // 启用
-        async startSensor({ state, commit, dispatch }) {
-            await dispatch('isSensorOk')
+            /**
+             * FatalError
+             * 硬件未连接时，会报这个错 res -43
+             */
+            subscriber.add('FatalError', (res) => {
+                xLog('FatalError       回调，返回值：', res)
+            })
 
-            xLog('in startSensor')
-            state.subscriber.removeAll()
-            state.subscriber.add('ProximityChanged', (res) => {
+            subscriber.add('Timeout', (res) => {
+                xLog('Timeout          回调，返回值：', res)
+            })
+
+            subscriber.add('ProximityChanged', (res) => {
                 xLog('ProximityChanged', res)
                 // OFF 有人靠近 | ON 离开
                 if (res === 'OFF') {
@@ -105,14 +117,38 @@ const sensor = {
                     }
                 }
             })
+
+            state.controller[API.CONNECT](_NAME_LOGIC, TIMEOUT.CONNECT)
+        },
+        [_CHECK_]({ state }) {
+            const stateJson = state.controller.strState
+
+            let o = null
+            try {
+                o = JSON.parse(stateJson)
+                xLog('状态', o)
+            } catch (e) {
+                return Promise.reject(`${_NAME}状态解析异常`)
+            }
+
+            if (o.StDeviceStatus !== STATUS.HEALTHY) {
+                return Promise.reject(`${_NAME}状态：${o.StDeviceStatus}`)
+            }
+
+            return Promise.resolve()
+        },
+
+        // 启用
+        async startSensor({ state, dispatch }) {
+            try {
+                await dispatch('isSensorOk')
+            } catch (e) {
+                return
+            }
+
             state.controller[API.START_SENSOR]((ret) => {
                 xLog(ret)
             })
-        },
-        // 停用
-        stopSensor({ state }) {
-            state.subscriber.removeAll()
-            state.controller[API.STOP_SENSOR]()
         },
     },
 }

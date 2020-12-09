@@ -347,25 +347,27 @@ export default {
             this.printed = true
             const { grower_name, grower_code, valid_amount } = this.info
             const { specifications, apply_num } = this.params
-            // 数量、时间、订单号、标题
             const fmt = 'yyyy-MM-dd HH:mm:ss'
+
+            /**
+             * 打印参数
+             * 1. 打印行为：action = 申领
+             * 2. 打印内容：content
+             */
+            const action = '申领'
             const content =
-                '\n' +
-                '*********************************************' +
-                '\n\n' +
+                '\n*********************************************\n\n' +
                 `   茶 农 编 号：${grower_code}\n\n` +
                 `   茶 农 姓 名：${grower_name}\n\n` +
-                `   申领 茶标数：${specifications}g * ${apply_num}枚\n\n` +
-                `   剩余 电子量：${valid_amount / 1000}kg\n\n` +
-                `   申领 单编号：${this.apply_code}\n\n` +
-                `   申 领 时 间：${dateFormat(fmt, new Date())}\n\n` +
-                '*********************************************' +
-                '\n'
-            const res = await this.$store.dispatch('doPrint', {
-                action: '申领',
-                content,
-            })
-            speakMsg('success', `${res}，请取走凭条`)
+                `   申 领 标 量：${specifications}g * ${apply_num}枚\n\n` +
+                `   剩 余 标 量：${valid_amount / 1000}kg\n\n` +
+                `   申 领 单 号：${this.apply_code}\n\n` +
+                `   申 领 时 间：${dateFormat(fmt, new Date())}` +
+                '\n\n*********************************************\n'
+
+            const params = { action, content }
+            await this.$store.dispatch('doPrint', params)
+            speakMsg('success', '打印完成，请取走凭条')
         },
         handleBack() {
             if (this.takenCardCheckout) {

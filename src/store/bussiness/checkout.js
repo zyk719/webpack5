@@ -53,7 +53,7 @@ function buildReadImageParams(box, total) {
     ]
 }
 
-let subscriber
+let subscriber, resolve, reject
 
 const checkout = {
     state: {
@@ -68,8 +68,6 @@ const checkout = {
             inject: false,
             open: false,
         },
-        resolve: () => {},
-        reject: () => {},
     },
     getters: {},
     mutations: {
@@ -147,7 +145,7 @@ const checkout = {
 
             /**
              * FatalError
-             * 硬件未连接时，会报这个错
+             * 硬件未连接时，会报这个错 res -43
              */
             subscriber.add('FatalError', (res) => {
                 xLog('FatalError       回调，返回值：', res)
@@ -162,10 +160,11 @@ const checkout = {
              * 出标结束时调用，返回出标数据
              */
             state.subscriber.add('ReadImageComplete', (res) => {
-                xLog('ReadImageComplete回调，返回值：', res)
-                this.resolve(res)
+                xLog('ReadImageComplete回调，返回值：', hex2Str(res))
+                resolve(res)
             })
 
+            /*
             state.subscriber.add('DataMissing', (res) => {
                 xLog('DataMissing      回调，返回值：', res)
             })
@@ -181,6 +180,7 @@ const checkout = {
             state.subscriber.add('NoMedia', (res) => {
                 xLog('NoMedia          回调，返回值：', res)
             })
+            */
 
             state.controller[API.CONNECT](_NAME_LOGIC, TIMEOUT.CONNECT)
         },
@@ -189,6 +189,7 @@ const checkout = {
             let o = null
             try {
                 o = JSON.parse(stateJson)
+                xLog('状态', o)
             } catch (e) {
                 return Promise.reject(`${_NAME}状态解析异常`)
             }
@@ -203,8 +204,8 @@ const checkout = {
         sendSign({ state }, params) {
             const { p, res, rej } = pResRej()
 
-            this.resolve = res
-            this.reject = rej
+            resolve = res
+            reject = rej
 
             state.controller[API.READ_IMAGE](...params)
 
@@ -212,21 +213,19 @@ const checkout = {
         },
         async readImage({ state, dispatch }, { box, total }) {
             /** 1. 灯光打开 */
-            const openTimeId = setTimeout(dispatch, 1000, 'lightCheckout')
+            dispatch('lightCheckout')
 
             /** 2. 出标 */
             const params = buildReadImageParams(box, total)
             const res = await dispatch('sendSign', params)
 
             /** 1. 灯光关闭 */
-            clearTimeout(openTimeId)
-            setTimeout(dispatch, 1000, 'closeCheckoutLight')
+            dispatch('closeCheckoutLight')
 
             const resJson = hex2Str(res)
-            const { barcode } = JSON.parse(resJson)
-            let sign = barcode.map((url) => url.split('?code=')[1])
-            sign = [...new Set(sign)]
-            return sign
+            let { barcode } = JSON.parse(resJson)
+            barcode = [...new Set(barcode)]
+            return barcode
         },
     },
 }

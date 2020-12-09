@@ -223,6 +223,7 @@ export default {
         async handlePrint() {
             this.printed = true
             const { grower_name, grower_code } = this.info
+            const fmt = 'yyyy-MM-dd HH:mm:ss'
 
             let backDetail = ''
             let num = 2
@@ -239,25 +240,20 @@ export default {
                         '---------------------------------------------\n\n'
                 }
             }
-            // 数量、时间、订单号、标题
-            const fmt = 'yyyy-MM-dd HH:mm:ss'
+
+            const action = '退标'
             const content =
-                '\n' +
-                '*********************************************' +
-                '\n\n' +
+                '\n*********************************************\n\n' +
                 `   茶 农 编 号：${grower_code}\n\n` +
                 `   茶 农 姓 名：${grower_name}\n\n` +
                 `   退 标 时 间：${dateFormat(fmt, new Date())}\n\n` +
                 `   退 标 明 细：\n\n` +
                 backDetail +
-                '*********************************************' +
-                '\n'
-            console.log(content)
-            const res = await this.$store.dispatch('doPrint', {
-                action: '申领',
-                content,
-            })
-            speakMsg('success', `${res}，请取走凭条`)
+                '*********************************************\n'
+
+            const params = { action, content }
+            const res = await this.$store.dispatch('doPrint', params)
+            speakMsg('success', `打印完成，请取走凭条`)
         },
         handleBack() {
             // todo 判断是否正在进标
@@ -346,6 +342,8 @@ export default {
             }
         },
         reBack() {
+            // 清空凭条打印记录
+            this.printed = false
             this.statusTransfer('back')
         },
     },

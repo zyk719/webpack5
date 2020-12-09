@@ -190,12 +190,17 @@ const cardReader = {
 
                 /** 重连后页面跳转 todo 调用 8 次行为是否稳定 */
                 count++
-                if (count === 8 && state.toPath) {
+                if (count === 8) {
                     state.statusNodes.open = true
                     setTimeout(() => {
-                        router
-                            .push(state.toPath)
-                            .then(() => commit('setToPath', undefined))
+                        xLog(JSON.parse(state.controller.strState))
+
+                        // 重连成功时会存在目标路径
+                        if (state.toPath) {
+                            router
+                                .push(state.toPath)
+                                .then(() => commit('setToPath', undefined))
+                        }
                     }, 99)
                 }
             })
@@ -220,6 +225,7 @@ const cardReader = {
             subscriber.add('Timeout', (res) => {
                 xLog('Timeout          回调，返回值：', res)
                 if (state.processNodes.forPut) {
+                    dispatch('closeIdcLight')
                     speakMsg('warning', '未在指定时间内放卡')
                     return backHome()
                 }
@@ -232,6 +238,7 @@ const cardReader = {
             // 3. ChipDataReceived: WFS_CMD_IDC_READ_RAW_DATA WFS_CMD_IDC_CHIP_IO
             // 4. CardAccepted
             subscriber.add('CardInserted', (res) => {
+                dispatch('closeIdcLight')
                 xLog('CardInserted     回调，返回值：', res)
             })
             subscriber.add('ChipDataReceived', (res) => {
@@ -249,7 +256,7 @@ const cardReader = {
                 if (state.processNodes.forTake) {
                     dispatch('takeIcCardCb')
                 }
-                commit('transferStatus')
+                commit('transferStatus', [])
             })
 
             // 非法卡
@@ -257,7 +264,7 @@ const cardReader = {
                 xLog('CardInvalid      回调，返回值：', res)
                 Message.destroy()
                 speakMsg('error', '请使用茶农卡登录')
-                commit('transferStatus')
+                commit('transferStatus', [])
                 return backHome()
             })
 
@@ -269,6 +276,7 @@ const cardReader = {
             let o = null
             try {
                 o = JSON.parse(stateJson)
+                xLog('状态', o)
             } catch (e) {
                 return Promise.reject(`${_NAME}状态解析异常`)
             }
@@ -346,17 +354,14 @@ const cardReader = {
             }
 
             /** 2. 开始监听放卡及灯光提示 */
-            let lightTimeId
             try {
-                lightTimeId = setTimeout(dispatch, 2000, 'lightIdc')
+                dispatch('lightIdc')
                 await dispatch('addEventListenerPut')
             } catch (e) {
-                Message.error(e)
-                return backHome()
-            } finally {
                 // 灯光关闭
-                clearTimeout(lightTimeId)
-                setTimeout(dispatch, 1000, 'closeIdc')
+                dispatch('closeIdcLight')
+                Message.error('监听放卡异常')
+                return backHome()
             }
         },
 

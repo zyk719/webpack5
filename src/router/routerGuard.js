@@ -259,6 +259,18 @@ function routerGuard(router) {
             }
         }
 
+        // 3. 打印机 /user/number
+        const loginAndToNum =
+            loginStatus === USER_LOGIN_STATUS_NAME && to.path === '/user/number'
+        if (loginAndToNum) {
+            await store.dispatch('isPrinterOk')
+        }
+
+        // 返回用户首页，关闭所有灯光
+        if (from.path !== null && to.fullPath === '/user/crossroad') {
+            store.dispatch('closeAllLights')
+        }
+
         /** 5. 无需捕获条件 */
         NProgress.start()
         next()
