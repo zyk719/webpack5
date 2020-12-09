@@ -331,8 +331,7 @@ export default {
             }
 
             // 最大可申领量 / 规格，向下取整
-            const realMax = Math.floor(this.info.valid_amount / Number(specs))
-            return realMax
+            return Math.floor(this.info.valid_amount / Number(specs))
         },
         // 输入法打开
         showIme() {

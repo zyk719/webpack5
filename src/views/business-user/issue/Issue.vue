@@ -33,6 +33,7 @@
                     v-show="!read"
                     :total="total"
                     :current.sync="params.page"
+                    :key="aioPageKey"
                 />
             </div>
         </div>
@@ -66,6 +67,7 @@ export default {
     components: { AioBtn, AioPage },
     data() {
         return {
+            aioPageKey: '',
             read: false,
             categoryCode: 'cat01_06',
             list: [],
@@ -123,6 +125,8 @@ export default {
             } catch (e) {
                 this.list = []
                 this.total = 0
+            } finally {
+                this.aioPageKey = Math.random()
             }
         },
         // 2. 问题详情

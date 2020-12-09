@@ -158,6 +158,7 @@ const equipment = {
             // Object.keys(controllers).forEach((key) => dispatch(`open${key}`))
             // todo 同时打开，逐一上报
             dispatch('openCardReader')
+            dispatch('openCheckout')
             // dispatch('startSensor')
             // dispatch('isCardReaderOk')
             // dispatch('isCheckoutOk')

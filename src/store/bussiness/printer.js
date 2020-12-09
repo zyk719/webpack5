@@ -100,10 +100,11 @@ const printer = {
                 rej('InvalidPrintData')
             )
 
+            const service = '      客服服务电话：0571-87758190\n\n.'
             const printText =
                 `R10=<西湖龙井茶${action}凭证>` +
                 `,R11=<${content}>` +
-                ',R12=<客服服务电话：0571-87758190/n/n>'
+                `,R12=<${service}>`
             const params = [
                 // FormName
                 'ReceiptForm',

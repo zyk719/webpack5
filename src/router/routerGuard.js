@@ -168,14 +168,14 @@ function routerGuard(router) {
                 }
 
                 // 读卡器状态查询 todo 本地开发时注释 0
-                // try {
-                //     await store.dispatch('isCardReaderOk')
-                // } catch (e) {
-                //     console.error(e)
-                //     Message.destroy()
-                //     Message.error('读卡器异常，本机暂时无法为您提供服务。')
-                //     return next('/user/crossroad')
-                // }
+                try {
+                    await store.dispatch('isCardReaderOk')
+                } catch (e) {
+                    console.error(e)
+                    Message.destroy()
+                    Message.error('读卡器异常，本机暂时无法为您提供服务。')
+                    return next('/user/crossroad')
+                }
 
                 // 服务器查询设备状态
                 try {
@@ -248,16 +248,16 @@ function routerGuard(router) {
         }
 
         // 2. 退标器 /user/back todo 本地开发时注释：测退标
-        // const loginAndToBack =
-        //     loginStatus === USER_LOGIN_STATUS_NAME && to.path === '/user/back'
-        // if (loginAndToBack) {
-        //     try {
-        //         await store.dispatch('isCheckinOk')
-        //     } catch (e) {
-        //         Message.error('退标器异常')
-        //         return next('/user/crossroad')
-        //     }
-        // }
+        const loginAndToBack =
+            loginStatus === USER_LOGIN_STATUS_NAME && to.path === '/user/back'
+        if (loginAndToBack) {
+            try {
+                await store.dispatch('isCheckinOk')
+            } catch (e) {
+                Message.error('退标器异常')
+                return next('/user/crossroad')
+            }
+        }
 
         /** 5. 无需捕获条件 */
         NProgress.start()

@@ -1,23 +1,26 @@
-/** 领标模块 */
+/**
+ * 领标模块，包含：
+ * 领标器控制器
+ * 控制领标，灯光
+ */
+
+import router from '@/router'
 
 /** helpers */
 import { log } from '@/libs/treasure'
-import { Message } from 'view-design'
-import { confirmOpen, confirmHealthy, pResRej } from '@/store/bussiness/common'
+import { pResRej } from '@/store/bussiness/common'
 import { hex2Str } from '@/libs/treasure'
 
 /** constant */
 import { API, STATUS, TIMEOUT, LOGIC_NAME } from '@/store/bussiness/common'
 import EventNotifiers from '@/store/bussiness/EventNotifiers'
-import { TYPE_CHECKOUT, STATUS_OK, STATUS_ERROR } from '@/libs/constant'
+import { putCheckoutErrorCall } from '@/api/bussiness/user'
 
-const _TYPE = TYPE_CHECKOUT
 const _NAME = '领标器'
 const _NAME_ENG = 'Checkout'
 const _NAME_LOGIC = LOGIC_NAME.CHECKOUT
 const _INIT_ = `set${_NAME_ENG}ControllerSubscriber`
 const _OPEN_ = `open${_NAME_ENG}`
-const _LOOK_ = `take${_NAME_ENG}State`
 const _CHECK_ = `is${_NAME_ENG}Ok`
 const xLog = log.bind(null, _NAME)
 
@@ -50,116 +53,158 @@ function buildReadImageParams(box, total) {
     ]
 }
 
+let subscriber
+
 const checkout = {
     state: {
         controller: {},
         subscriber: {},
+        /**
+         * 状态节点
+         * 标记注入
+         * 标记读卡器打开
+         */
+        statusNodes: {
+            inject: false,
+            open: false,
+        },
+        resolve: () => {},
+        reject: () => {},
     },
     getters: {},
     mutations: {
         [_INIT_](state, controller) {
             state.controller = controller
             state.subscriber = new EventNotifiers(state.controller)
+            subscriber = new EventNotifiers(state.controller)
+
+            // 状态登记
+            state.statusNodes.inject = true
         },
     },
     actions: {
-        /** hardware */
-        [_OPEN_]({ state }) {
-            const { p, res, rej } = pResRej()
+        /** hardware **/
+        // 打开领标器
+        [_OPEN_]({ state, dispatch }) {
+            subscriber.removeAll()
 
-            state.subscriber.removeAll()
-            // success
-            state.subscriber.add('OpenCompleted', res)
-            state.subscriber.add('ConnectionOpened', res)
-            // failed
-            state.subscriber.add('DeviceError', () =>
-                rej(`${_NAME}打开：'DeviceError'`)
-            )
-            state.subscriber.add('FatalError', () =>
-                rej(`${_NAME}打开：'FatalError'`)
-            )
-            state.subscriber.add('Timeout', () =>
-                rej(`${_NAME}打开：'Timeout'`)
-            )
+            /** 注册所有事件 **/
+
+            /**
+             * OpenCompleted
+             * 连接领标器：无设备不可连接，走 FatalError 回调 -43
+             * 首次连接时才会触发
+             */
+            let isFirst = false
+            subscriber.add('OpenCompleted', (res) => {
+                xLog('OpenCompleted    回调，返回值：', res)
+                isFirst = true
+            })
+
+            /**
+             * ConnectionOpened
+             * 首次连接和再次连接均会被调用
+             * 首次连接时会调用 8 次，具体看图片：checkout_websocket_open.png
+             */
+            let count = 0
+            subscriber.add('ConnectionOpened', (res) => {
+                xLog('ConnectionOpened 回调，返回值：', res)
+                isFirst || (state.statusNodes.open = true)
+
+                /** 重连后页面跳转 todo 调用 8 次行为是否稳定 */
+                count++
+                if (count === 8) {
+                    state.statusNodes.open = true
+                    setTimeout(() => {
+                        xLog(JSON.parse(state.controller.strState))
+                    }, 99)
+                }
+            })
+
+            /**
+             * DeviceError
+             * 在出标时会报异常，可通过 state.customer.checkoutLoading 判断
+             * 且异常后，ReadImageComplete 回调不会再被调用
+             * 1. todo 手动上报异常
+             * 2. 关灯
+             * 3. 返回首页
+             * */
+            subscriber.add('DeviceError', (res) => {
+                xLog(
+                    'DeviceError      回调，返回值：',
+                    res,
+                    JSON.parse(state.controller.strState)
+                )
+                if (state.customer.checkoutLoading) {
+                    dispatch('closeCheckoutLight')
+                    const params = {
+                        equ_user_code: '',
+                    }
+                    putCheckoutErrorCall({})
+                    return router.push('/user/cross')
+                }
+            })
+
+            /**
+             * FatalError
+             * 硬件未连接时，会报这个错
+             */
+            subscriber.add('FatalError', (res) => {
+                xLog('FatalError       回调，返回值：', res)
+            })
+
+            subscriber.add('Timeout', (res) => {
+                xLog('Timeout          回调，返回值：', res)
+            })
+
+            /**
+             * ReadImageComplete
+             * 出标结束时调用，返回出标数据
+             */
+            state.subscriber.add('ReadImageComplete', (res) => {
+                xLog('ReadImageComplete回调，返回值：', res)
+                this.resolve(res)
+            })
+
+            state.subscriber.add('DataMissing', (res) => {
+                xLog('DataMissing      回调，返回值：', res)
+            })
+            state.subscriber.add('DataNotSupport', (res) => {
+                xLog('DataNotSuppor    回调，返回值：', res)
+            })
+            state.subscriber.add('MediaInserted', (res) => {
+                xLog('MediaInserted    回调，返回值：', res)
+            })
+            state.subscriber.add('PrintHalted', (res) => {
+                xLog('PrintHalted      回调，返回值：', res)
+            })
+            state.subscriber.add('NoMedia', (res) => {
+                xLog('NoMedia          回调，返回值：', res)
+            })
 
             state.controller[API.CONNECT](_NAME_LOGIC, TIMEOUT.CONNECT)
-
-            return p
         },
-        [_LOOK_]({ state }) {
+        [_CHECK_]({ state }) {
             const stateJson = state.controller.strState
-
+            let o = null
             try {
-                const { StDeviceStatus } = JSON.parse(stateJson)
-
-                if (StDeviceStatus !== STATUS.HEALTHY) {
-                    return Promise.reject(`${_NAME}状态：${StDeviceStatus}`)
-                }
-
-                return Promise.resolve()
+                o = JSON.parse(stateJson)
             } catch (e) {
-                return Promise.reject(`${_NAME}状态：解析异常`)
+                return Promise.reject(`${_NAME}状态解析异常`)
             }
-        },
-        [_LOOK_]({ state }) {
-            const stateJson = state.controller.strState
-
-            try {
-                const { StDeviceStatus } = JSON.parse(stateJson)
-
-                if (StDeviceStatus !== STATUS.HEALTHY) {
-                    return Promise.reject(`${_NAME}状态：${StDeviceStatus}`)
-                }
-
-                return Promise.resolve()
-            } catch (e) {
-                return Promise.reject(`${_NAME}状态：解析异常`)
+            if (o.StDeviceStatus !== STATUS.HEALTHY) {
+                return Promise.reject(`${_NAME}状态：${o.StDeviceStatus}`)
             }
-        },
-        async [_CHECK_]({ dispatch }) {
-            try {
-                await dispatch(_OPEN_)
-                await dispatch(_LOOK_)
-                dispatch('putIssue', [_TYPE, STATUS_OK])
-                return Promise.resolve()
-            } catch (e) {
-                dispatch('putIssue', [_TYPE, STATUS_ERROR, e])
-                return Promise.reject(e)
-            }
+
+            return Promise.resolve()
         },
 
         // 出标
         sendSign({ state }, params) {
             const { p, res, rej } = pResRej()
 
-            state.subscriber.removeAll()
-            state.subscriber.add('DeviceError', (response) => {
-                console.log('DeviceError', response)
-            })
-            state.subscriber.add('FatalError', (response) => {
-                console.log('FatalError', response)
-            })
-            state.subscriber.add('Timeout', (response) => {
-                console.log('Timeout', response)
-            })
-
-            state.subscriber.add('ReadImageComplete', res)
-
-            state.subscriber.add('DataMissing', (response) => {
-                console.log('DataMissing', response)
-            })
-            state.subscriber.add('DataNotSupport', (response) => {
-                console.log('DataNotSupport', response)
-            })
-            state.subscriber.add('MediaInserted', (response) => {
-                console.log('MediaInserted', response)
-            })
-            state.subscriber.add('PrintHalted', (response) => {
-                console.log('PrintHalted', response)
-            })
-            state.subscriber.add('NoMedia', (response) => {
-                console.log('NoMedia', response)
-            })
+            this.resolve = res
+            this.reject = rej
 
             state.controller[API.READ_IMAGE](...params)
 

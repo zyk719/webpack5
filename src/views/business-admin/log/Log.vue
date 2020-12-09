@@ -28,6 +28,7 @@
             :page-size="params.rows"
             :current.sync="params.page"
             :total="total"
+            :key="pageKey"
         />
     </div>
 </template>
@@ -42,6 +43,7 @@ export default {
     components: { AioBtn },
     data() {
         return {
+            pageKey: '',
             ddKeys: {
                 type: 'Xhlj_Equipment_Trade_BUSINESS_TYPE',
             },
@@ -175,6 +177,7 @@ export default {
                 this.total = total
             } finally {
                 this.loading = false
+                this.pageKey = Math.random()
             }
         },
     },

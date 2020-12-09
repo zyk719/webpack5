@@ -46,6 +46,7 @@
                 :page-size="5"
                 :current.sync="page"
                 :total="total"
+                :key="aioPageKey"
             />
             <Spin fix v-if="listLoading">
                 <Icon
@@ -186,6 +187,7 @@ export default {
             rules: {
                 satisfaction: ruleSelect('满意度'),
             },
+            aioPageKey: '',
         }
     },
     computed: {
@@ -295,6 +297,8 @@ export default {
                 const { obj, total } = await evaluationListCall(params)
                 this.list = obj
                 this.total = total
+                // 分页组件在触屏上有同时显示多个选中问题，重新渲染可解决
+                this.aioPageKey = Math.random()
             } finally {
                 this.listLoading = false
             }

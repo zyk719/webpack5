@@ -41,6 +41,7 @@
                     v-show="status.display"
                     :total="total"
                     :current.sync="params.page"
+                    :key="aioPageKey"
                 />
 
                 <!-- 内容 -->
@@ -116,6 +117,7 @@ export default {
     components: { AioBtn, AioPage, InfoSide, TopBar },
     data() {
         return {
+            aioPageKey: '',
             curSwitch: undefined,
             params: {
                 page: 1,
@@ -257,6 +259,7 @@ export default {
                 this.list = []
                 this.total = 0
             } finally {
+                this.aioPageKey = Math.random()
                 needLoading && (this.loading = false)
             }
         },
