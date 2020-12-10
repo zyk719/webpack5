@@ -4,9 +4,9 @@ import { USER_LOGIN_STATUS_NAME } from '@/store/bussiness/cardReader'
 import EventNotifiers from '@/store/bussiness/EventNotifiers'
 import {
     API,
-    LOGIC_NAME,
-    pResRej,
     STATUS,
+    STATUS_KEY,
+    LOGIC_NAME,
     TIMEOUT,
 } from '@/store/bussiness/common'
 
@@ -33,7 +33,17 @@ const sensor = {
             open: false,
         },
     },
-    getters: {},
+    getters: {
+        sensorStatus(state) {
+            let o = null
+            try {
+                o = JSON.parse(state.controller.strState)
+            } catch (e) {
+                o = {}
+            }
+            return o
+        },
+    },
     mutations: {
         [_INIT_](state, controller) {
             state.controller = controller
@@ -131,8 +141,8 @@ const sensor = {
                 return Promise.reject(`${_NAME}状态解析异常`)
             }
 
-            if (o.StDeviceStatus !== STATUS.HEALTHY) {
-                return Promise.reject(`${_NAME}状态：${o.StDeviceStatus}`)
+            if (o[STATUS_KEY] !== STATUS.HEALTHY) {
+                return Promise.reject(`${_NAME}状态：${o[STATUS_KEY]}`)
             }
 
             return Promise.resolve()

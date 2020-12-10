@@ -6,17 +6,18 @@
  *  2. 登陆时向服务器请求设备信息，保存于 store
  *  3. 登陆时向服务器请求盒子信息，保存于 store
  */
-import store from '../index'
 
 /** helpers */
 import { log } from '@/libs/treasure'
 import { getToken } from '@/libs/util'
 import { getEquipmentInfoCall, getBoxInfoCall } from '@/api/bussiness/equipment'
 import { WEBSOCKET_ADDRESS } from '@/config'
-import { pResRej, API } from '@/store/bussiness/common'
+import {
+    API,
+    pResRej,
+    reportEquipmentStatusInterval,
+} from '@/store/bussiness/common'
 import { Message } from 'view-design'
-import { NEED_EQUIPMENT_PAGE_ARR } from '@/router/routerGuard'
-import router from '@/router'
 
 /** API */
 import { ADMIN_LOGIN_STATUS_NAME, login, logout } from '@/api/app/user'
@@ -163,9 +164,10 @@ const equipment = {
             dispatch('openGuideLight')
             dispatch('openSensor')
 
-            // todo 定时上报
+            // 定时上报
+            setTimeout(reportEquipmentStatusInterval, 1000 * 10)
         },
-        async initX({ dispatch, commit, state }) {
+        async initX({ dispatch, commit }) {
             commit('setConnecting', true)
 
             /** 1. websocket */

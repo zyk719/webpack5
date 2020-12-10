@@ -4,8 +4,14 @@
 import { log } from '@/libs/treasure'
 import { Message } from 'view-design'
 import EventNotifiers from '@/store/bussiness/EventNotifiers'
-import { API, LOGIC_NAME, pResRej, TIMEOUT } from '@/store/bussiness/common'
-import { STATUS } from '@/store/bussiness/common'
+import {
+    API,
+    STATUS,
+    LOGIC_NAME,
+    STATUS_KEY,
+    pResRej,
+    TIMEOUT,
+} from '@/store/bussiness/common'
 
 const _NAME = '打印器'
 const _NAME_ENG = 'Printer'
@@ -52,8 +58,17 @@ const printer = {
             open: false,
         },
     },
-    getters: {},
-
+    getters: {
+        printerStatus(state) {
+            let o = null
+            try {
+                o = JSON.parse(state.controller.strState)
+            } catch (e) {
+                o = {}
+            }
+            return o
+        },
+    },
     mutations: {
         [_INIT_](state, controller) {
             state.controller = controller
@@ -141,8 +156,8 @@ const printer = {
             } catch (e) {
                 return Promise.reject(`${_NAME}状态解析异常`)
             }
-            if (o.StDeviceStatus !== STATUS.HEALTHY) {
-                return Promise.reject(`${_NAME}状态：${o.StDeviceStatus}`)
+            if (o[STATUS_KEY] !== STATUS.HEALTHY) {
+                return Promise.reject(`${_NAME}状态：${o[STATUS_KEY]}`)
             }
 
             return Promise.resolve()

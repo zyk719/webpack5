@@ -19,6 +19,7 @@ import {
     STATUS,
     TIMEOUT,
     LOGIC_NAME,
+    STATUS_KEY,
     pResRej,
     backHome,
 } from '@/store/bussiness/common'
@@ -108,7 +109,17 @@ const cardReader = {
          */
         toPath: undefined,
     },
-    getters: {},
+    getters: {
+        cardReaderStatus(state) {
+            let o = null
+            try {
+                o = JSON.parse(state.controller.strState)
+            } catch (e) {
+                o = {}
+            }
+            return o
+        },
+    },
     mutations: {
         // 控制器初始化
         // 发布订阅中心初始化
@@ -280,8 +291,8 @@ const cardReader = {
             } catch (e) {
                 return Promise.reject(`${_NAME}状态解析异常`)
             }
-            if (o.StDeviceStatus !== STATUS.HEALTHY) {
-                return Promise.reject(`${_NAME}状态：${o.StDeviceStatus}`)
+            if (o[STATUS_KEY] !== STATUS.HEALTHY) {
+                return Promise.reject(`${_NAME}状态：${o[STATUS_KEY]}`)
             }
 
             return Promise.resolve()

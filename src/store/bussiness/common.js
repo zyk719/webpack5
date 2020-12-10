@@ -1,5 +1,7 @@
-import EventNotifiers from '@/store/bussiness/EventNotifiers'
+import store from '@/store'
 import router from '@/router'
+import { REPORT_INTERVAL } from '@/config'
+import { putModuleStatusCall } from '@/api/bussiness/equipment'
 
 export const STATUS_KEY = 'StDeviceStatus'
 
@@ -70,7 +72,6 @@ export const API = {
 /**
  * opened promise
  */
-
 export const pResRej = () => {
     let res, rej
     const p = new Promise((resolve, reject) => {
@@ -80,35 +81,130 @@ export const pResRej = () => {
     return { p, res, rej }
 }
 
-// 设备连接
-export const confirmOpen = async (state, name, logicName) => {
-    const { ret } = await state.controller[API.CONNECT](
-        logicName,
-        TIMEOUT.CONNECT
-    )
-
-    if (!STATUS.OPEN.includes(ret)) {
-        throw new Error(`无法连接到${name}(${ret})`)
-    }
-}
-
-// 设备状态
-export const confirmHealthy = async (state, name) => {
-    const res = await state.controller[API.GET_STATE]()
-    const ret = res[STATUS_KEY]
-
-    if (ret !== STATUS.HEALTHY) {
-        throw new Error(`${name}状态异常(${ret})`)
-    }
-}
-
 // 返回首页
 export const backHome = () => router.replace('/user/crossroad')
 
-// 消息中心初始化
-export const initSubscriber = (modules) => {
-    const listeners = controllers.map(
-        (controller) => new EventNotifiers(controller)
-    )
-    return
+/**
+ * 状态上报接口参数
+ * module_type: 1|发标模块 2|退标模块 3|二维码 4|凭条打印机 5|双目摄像头 6|读卡器 7|安全门 8|人体感应 9|远程协助
+ * module_status: 1|正常 2|异常 3|告警
+ * module_status_desc: string
+ */
+
+// 领标器状态 1
+const reportCheckout = async () => {
+    const state = store.getters.checkoutStatus
+    const status = state[STATUS_KEY]
+    const statusMapper = {
+        [STATUS.HEALTHY]: 1,
+    }
+
+    const params = {
+        module_type: 1,
+        module_status: statusMapper[status] || 2,
+        module_status_desc: status || JSON.stringify(state),
+    }
+
+    await putModuleStatusCall(params)
+
+    console.log(new Date().toLocaleString(), '领标器上报状态：', params)
+}
+
+// 退标器状态 2
+const reportCheckin = async () => {
+    const state = store.getters.checkinStatus
+    const status = state[STATUS_KEY]
+    const statusMapper = {
+        [STATUS.HEALTHY]: 1,
+    }
+
+    const params = {
+        module_type: 2,
+        module_status: statusMapper[status] || 2,
+        module_status_desc: status || JSON.stringify(state),
+    }
+
+    await putModuleStatusCall(params)
+
+    console.log(new Date().toLocaleString(), '退标器上报状态：', params)
+}
+
+// 打印器状态 4
+const reportPrinter = async () => {
+    const state = store.getters.printerStatus
+    const status = state[STATUS_KEY]
+    const statusMapper = {
+        [STATUS.HEALTHY]: 1,
+    }
+
+    const params = {
+        module_type: 4,
+        module_status: statusMapper[status] || 2,
+        module_status_desc: status || JSON.stringify(state),
+    }
+
+    // 设备正常时检查是否缺纸
+    const isFull = state.StPaperStatus === 'FULL'
+    if (params.module_status === 1 && !isFull) {
+        params.module_status = 2
+        params.module_status_desc = '打印机缺纸'
+        console.log('缺纸', !isFull)
+    }
+
+    await putModuleStatusCall(params)
+
+    console.log(new Date().toLocaleString(), '打印器上报状态：', params)
+}
+
+// 读卡器状态 6
+const reportCardReader = async () => {
+    const state = store.getters.cardReaderStatus
+    const status = state[STATUS_KEY]
+    const statusMapper = {
+        [STATUS.HEALTHY]: 1,
+    }
+
+    const params = {
+        module_type: 6,
+        module_status: statusMapper[status] || 2,
+        module_status_desc: status || JSON.stringify(state),
+    }
+
+    await putModuleStatusCall(params)
+
+    console.log(new Date().toLocaleString(), '读卡器上报状态：', params)
+}
+
+// 感应器状态 8
+const reportSensor = async () => {
+    const state = store.getters.sensorStatus
+    const status = state[STATUS_KEY]
+    const statusMapper = {
+        [STATUS.HEALTHY]: 1,
+    }
+
+    const params = {
+        module_type: 8,
+        module_status: statusMapper[status] || 2,
+        module_status_desc: status || JSON.stringify(state),
+    }
+
+    await putModuleStatusCall(params)
+
+    console.log(new Date().toLocaleString(), '感应器上报状态：', params)
+}
+
+// 定时上报
+export const reportEquipmentStatusInterval = () => {
+    const report = async () => {
+        await reportCheckout()
+        await reportCheckin()
+        await reportPrinter()
+        await reportCardReader()
+        await reportSensor()
+    }
+
+    report().then(() => console.log('自助机启动后状态已上报'))
+
+    setInterval(report, REPORT_INTERVAL)
 }

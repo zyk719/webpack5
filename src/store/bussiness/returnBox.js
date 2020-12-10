@@ -32,7 +32,17 @@ const returnBox = {
         count: 0,
         returnInfo: [],
     },
-    getters: {},
+    getters: {
+        checkinStatus(state) {
+            let o = null
+            try {
+                o = JSON.parse(state.controller.strState)
+            } catch (e) {
+                o = {}
+            }
+            return o
+        },
+    },
     mutations: {
         [_INIT_](state, controller) {
             state.controller = controller

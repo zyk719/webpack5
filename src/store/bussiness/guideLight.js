@@ -1,9 +1,9 @@
 import {
     API,
-    backHome,
-    LOGIC_NAME,
     STATUS,
     TIMEOUT,
+    STATUS_KEY,
+    LOGIC_NAME,
 } from '@/store/bussiness/common'
 import { log, speakMsg } from '@/libs/treasure'
 import EventNotifiers from '@/store/bussiness/EventNotifiers'
@@ -125,17 +125,23 @@ const guideLight = {
                 return Promise.reject(`${_NAME}状态解析异常`)
             }
 
-            if (o.StDeviceStatus !== STATUS.HEALTHY) {
-                return Promise.reject(`${_NAME}状态：${o.StDeviceStatus}`)
+            if (o[STATUS_KEY] !== STATUS.HEALTHY) {
+                return Promise.reject(`${_NAME}状态：${o[STATUS_KEY]}`)
             }
 
             return Promise.resolve()
         },
-        async setLight({ dispatch, state }, { equipment, action }) {
+        async setLight(
+            { dispatch, state },
+            { equipment, action, warn = true }
+        ) {
             try {
                 await dispatch('isGuideLightOk')
             } catch (e) {
-                Message.error(e)
+                if (warn) {
+                    Message.destroy()
+                    Message.error(e)
+                }
                 return
             }
 
@@ -148,11 +154,12 @@ const guideLight = {
                 equipment: EQUIPMENT.IDC,
             })
         },
-        closeIdcLight({ dispatch }) {
-            console.log('读卡器指示灯 OFF')
+        closeIdcLight({ dispatch }, warn = true) {
+            warn && console.log('读卡器指示灯 OFF')
             dispatch('setLight', {
                 equipment: EQUIPMENT.IDC,
                 action: LIGHT_ACTIONS.OFF,
+                warn,
             })
         },
         lightCheckout({ dispatch }) {
@@ -161,11 +168,12 @@ const guideLight = {
                 equipment: EQUIPMENT.CHECKOUT,
             })
         },
-        closeCheckoutLight({ dispatch }) {
-            console.log('领标器指示灯 OFF')
+        closeCheckoutLight({ dispatch }, warn = true) {
+            warn && console.log('领标器指示灯 OFF')
             dispatch('setLight', {
                 equipment: EQUIPMENT.CHECKOUT,
                 action: LIGHT_ACTIONS.OFF,
+                warn,
             })
         },
         lightCheckin({ dispatch }) {
@@ -174,11 +182,12 @@ const guideLight = {
                 equipment: EQUIPMENT.CHECKIN,
             })
         },
-        closeCheckinLight({ dispatch }) {
-            console.log('退标器指示灯 OFF')
+        closeCheckinLight({ dispatch }, warn = true) {
+            warn && console.log('退标器指示灯 OFF')
             dispatch('setLight', {
                 equipment: EQUIPMENT.CHECKIN,
                 action: LIGHT_ACTIONS.OFF,
+                warn,
             })
         },
         lightPrinter({ dispatch }) {
@@ -187,18 +196,19 @@ const guideLight = {
                 equipment: EQUIPMENT.PRINTER,
             })
         },
-        closePrinterLight({ dispatch }) {
-            console.log('打印器指示灯 OFF')
+        closePrinterLight({ dispatch }, warn = true) {
+            warn && console.log('打印器指示灯 OFF')
             dispatch('setLight', {
                 equipment: EQUIPMENT.PRINTER,
                 action: LIGHT_ACTIONS.OFF,
+                warn,
             })
         },
         closeAllLights({ dispatch }) {
-            dispatch('closePrinterLight')
-            dispatch('closeCheckinLight')
-            dispatch('closeCheckoutLight')
-            dispatch('closeIdcLight')
+            dispatch('closePrinterLight', false)
+            dispatch('closeCheckinLight', false)
+            dispatch('closeCheckoutLight', false)
+            dispatch('closeIdcLight', false)
         },
     },
 }

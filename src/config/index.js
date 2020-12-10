@@ -23,4 +23,7 @@ module.exports = {
 
     /** 屏幕保护时间 */
     SCREEN_SAVER_INTERVAL: 1000 * 10,
+
+    /** 状态上报间隔 */
+    REPORT_INTERVAL: 1000 * 60 * 5,
 }

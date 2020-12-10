@@ -12,7 +12,13 @@ import { pResRej } from '@/store/bussiness/common'
 import { hex2Str } from '@/libs/treasure'
 
 /** constant */
-import { API, STATUS, TIMEOUT, LOGIC_NAME } from '@/store/bussiness/common'
+import {
+    API,
+    STATUS,
+    TIMEOUT,
+    LOGIC_NAME,
+    STATUS_KEY,
+} from '@/store/bussiness/common'
 import EventNotifiers from '@/store/bussiness/EventNotifiers'
 import { putCheckoutErrorCall } from '@/api/bussiness/user'
 
@@ -69,7 +75,17 @@ const checkout = {
             open: false,
         },
     },
-    getters: {},
+    getters: {
+        checkoutStatus(state) {
+            let o = null
+            try {
+                o = JSON.parse(state.controller.strState)
+            } catch (e) {
+                o = {}
+            }
+            return o
+        },
+    },
     mutations: {
         [_INIT_](state, controller) {
             state.controller = controller
@@ -193,8 +209,8 @@ const checkout = {
             } catch (e) {
                 return Promise.reject(`${_NAME}状态解析异常`)
             }
-            if (o.StDeviceStatus !== STATUS.HEALTHY) {
-                return Promise.reject(`${_NAME}状态：${o.StDeviceStatus}`)
+            if (o[STATUS_KEY] !== STATUS.HEALTHY) {
+                return Promise.reject(`${_NAME}状态：${o[STATUS_KEY]}`)
             }
 
             return Promise.resolve()
