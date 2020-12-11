@@ -6,7 +6,7 @@ import { SCREEN_SAVER_INTERVAL } from '@/config'
     const openLater = () =>
         setTimeout(
             store.commit,
-            SCREEN_SAVER_INTERVAL,
+            SCREEN_SAVER_INTERVAL / 2,
             'toggleScreenSaver',
             true
         )

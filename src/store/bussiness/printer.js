@@ -190,14 +190,17 @@ const printer = {
             }
 
             /** 打印 */
+            let msg
             try {
                 dispatch('lightPrinter')
+                msg = Message.loading('正在打印凭条...')
                 await dispatch('print', text)
                 res()
             } catch (e) {
                 Message.error(`凭条打印时发生异常 ${e}`)
                 rej()
             } finally {
+                msg()
                 dispatch('closePrinterLight')
             }
 

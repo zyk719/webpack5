@@ -1,5 +1,6 @@
 import Vue from 'vue'
 import Vuex from 'vuex'
+import { SCREEN_SAVER_INTERVAL } from '@/config'
 
 // 应用状态模块
 import user from '@/store/app/user'
@@ -24,7 +25,6 @@ import printer from '@/store/bussiness/printer'
 import cache from '@/store/bussiness/cache'
 // 感应器
 import sensor from '@/store/bussiness/sensor'
-import { putModuleStatusCall } from '@/api/bussiness/equipment'
 
 Vue.use(Vuex)
 
@@ -40,8 +40,11 @@ export default new Vuex.Store({
                     const StProximityState = JSON.parse(stateJson)
                         .StProximityState
                     if (StProximityState === 'ON') {
-                        state.screenSaver = status
+                        setTimeout(() => {
+                            state.screenSaver = status
+                        }, SCREEN_SAVER_INTERVAL / 2)
                     } else if (StProximityState === 'OFF') {
+                        ddaaa
                         document.body.click()
                     }
                 }
@@ -51,15 +54,7 @@ export default new Vuex.Store({
             state.screenSaver = status
         },
     },
-    actions: {
-        // 故障上报
-        putIssue({}, [module_type, module_status, module_status_desc]) {
-            const params = { module_type, module_status, module_status_desc }
-            // TODO upload
-            console.log(params)
-            // putModuleStatusCall(params)
-        },
-    },
+    actions: {},
     modules: {
         user,
         dictionary,
