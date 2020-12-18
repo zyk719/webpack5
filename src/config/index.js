@@ -22,7 +22,7 @@ module.exports = {
     WEBSOCKET_ADDRESS: 'ws://localhost:12348',
 
     /** 屏幕保护时间 */
-    SCREEN_SAVER_INTERVAL: 1000 * 10,
+    SCREEN_SAVER_INTERVAL: 1000 * 20,
 
     /** 状态上报间隔 */
     REPORT_INTERVAL: 1000 * 60 * 5,

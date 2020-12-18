@@ -37,6 +37,8 @@ export const LOGIC_NAME = {
     IDC_TRACK_MAP: 'CHIP',
     // 领标器
     CHECKOUT: 'BillDispenser',
+    CHECKOUT2: 'BillDispenserEX',
+    CHECKOUT3: 'BillDispenserAUX',
     // 退标器
     CHECKIN: 'BillScanner',
     // 灯光

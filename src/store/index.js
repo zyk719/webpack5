@@ -13,6 +13,10 @@ import equipment from '@/store/bussiness/equipment'
 import cardReader from '@/store/bussiness/cardReader'
 // 领标设备
 import checkout from '@/store/bussiness/checkout'
+// 领标设备2
+import checkout2 from '@/store/bussiness/checkout2'
+// 领标设备3
+import checkout3 from '@/store/bussiness/checkout3'
 // 退标盒子
 import returnBox from '@/store/bussiness/returnBox'
 // 灯光设备
@@ -33,6 +37,7 @@ export default new Vuex.Store({
         screenSaver: false,
     },
     mutations: {
+        // ON 表示感应器没有感应到物体，是硬件的设定
         toggleScreenSaver(state, status) {
             if (status) {
                 const stateJson = state.sensor.controller.strState
@@ -41,10 +46,11 @@ export default new Vuex.Store({
                         .StProximityState
                     if (StProximityState === 'ON') {
                         setTimeout(() => {
-                            state.screenSaver = status
+                            if (StProximityState === 'ON') {
+                                state.screenSaver = status
+                            }
                         }, SCREEN_SAVER_INTERVAL / 2)
                     } else if (StProximityState === 'OFF') {
-                        ddaaa
                         document.body.click()
                     }
                 }
@@ -61,6 +67,8 @@ export default new Vuex.Store({
         equipment,
         customer: cardReader,
         checkout,
+        checkout2,
+        checkout3,
         returnBox,
         ime,
         cache,

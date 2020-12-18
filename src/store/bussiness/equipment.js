@@ -138,8 +138,12 @@ const equipment = {
             const controllers = {
                 // 读卡器
                 CardReader: 'idc',
-                // 领标器
+                // 领标器1
                 Checkout: 'chkout',
+                // 领标器2
+                Checkout2: 'chkout2',
+                // 领标器3
+                Checkout3: 'chkout3',
                 // 退标器
                 Checkin: 'chkin',
                 // 指示灯
@@ -156,10 +160,12 @@ const equipment = {
                 const type = `set${key}ControllerSubscriber`
                 commit(type, controller)
             })
-            // Object.keys(controllers).forEach((key) => dispatch(`open${key}`))
-            // todo 同时打开，逐一上报
+
+            // 同时打开
             dispatch('openCardReader')
             dispatch('openCheckout')
+            dispatch('openCheckout2')
+            dispatch('openCheckout3')
             dispatch('openPrinter')
             dispatch('openGuideLight')
             dispatch('openSensor')

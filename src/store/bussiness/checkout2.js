@@ -22,15 +22,15 @@ import {
 import EventNotifiers from '@/store/bussiness/EventNotifiers'
 import { putCheckoutErrorCall } from '@/api/bussiness/user'
 
-const _NAME = '领标器'
-const _NAME_ENG = 'Checkout'
-const _NAME_LOGIC = LOGIC_NAME.CHECKOUT
+const _NAME = '领标器2'
+const _NAME_ENG = 'Checkout2'
+const _NAME_LOGIC = LOGIC_NAME.CHECKOUT2
 const _INIT_ = `set${_NAME_ENG}ControllerSubscriber`
 const _OPEN_ = `open${_NAME_ENG}`
 const _CHECK_ = `is${_NAME_ENG}Ok`
 const xLog = log.bind(null, _NAME)
-const _SEND_SIGN_ = 'sendSign'
-const _READ_IMAGE_ = 'readImage'
+const _SEND_SIGN_ = 'sendSign2'
+const _READ_IMAGE_ = 'readImage2'
 
 /**
  * params
@@ -77,7 +77,7 @@ const checkout = {
         },
     },
     getters: {
-        checkoutStatus(state) {
+        checkoutStatus2(state) {
             let o = null
             try {
                 o = JSON.parse(state.controller.strState)
@@ -233,7 +233,7 @@ const checkout = {
 
             /** 2. 出标 */
             const params = buildReadImageParams(box, total)
-            const res = await dispatch('sendSign', params)
+            const res = await dispatch(_SEND_SIGN_, params)
 
             /** 1. 灯光关闭 */
             dispatch('closeCheckoutLight')
