@@ -1,7 +1,7 @@
 /** 打印模块 */
 
 /** helpers */
-import { log } from '@/libs/treasure'
+import { log, speakMsg } from '@/libs/treasure'
 import { Message } from 'view-design'
 import EventNotifiers from '@/store/bussiness/EventNotifiers'
 import {
@@ -67,6 +67,9 @@ const printer = {
                 o = {}
             }
             return o
+        },
+        printerOk(state, getters) {
+            return getters.printerStatus.StDeviceStatus === 'HEALTHY'
         },
     },
     mutations: {
@@ -179,32 +182,32 @@ const printer = {
             return p
         },
         async doPrint({ dispatch }, text) {
-            const { p, res, rej } = pResRej()
+            return new Promise(async (res, rej) => {
+                /** 设备检查 */
+                try {
+                    await dispatch('isPrinterOk')
+                } catch (e) {
+                    Message.error(`凭条打印机异常 ${e}`)
+                    rej(e)
+                    return
+                }
 
-            /** 设备检查 */
-            try {
-                await dispatch('isPrinterOk')
-            } catch (e) {
-                Message.error(`凭条打印机异常 ${e}`)
-                return rej()
-            }
-
-            /** 打印 */
-            let msg
-            try {
-                dispatch('lightPrinter')
-                msg = Message.loading('正在打印凭条...')
-                await dispatch('print', text)
-                res()
-            } catch (e) {
-                Message.error(`凭条打印时发生异常 ${e}`)
-                rej()
-            } finally {
-                msg()
-                dispatch('closePrinterLight')
-            }
-
-            return p
+                /** 打印 */
+                let msg
+                try {
+                    dispatch('lightPrinter')
+                    msg = Message.loading('正在打印凭条...')
+                    await dispatch('print', text)
+                    speakMsg('success', '打印完成，请取走凭条')
+                    res()
+                } catch (e) {
+                    Message.error(`凭条打印时发生异常 ${e}`)
+                    rej(e)
+                } finally {
+                    msg()
+                    dispatch('closePrinterLight')
+                }
+            })
         },
     },
 }

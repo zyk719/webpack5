@@ -1,5 +1,5 @@
 module.exports = {
-    presets: ['@babel/preset-env'],
+    presets: [['@babel/preset-env', { useBuiltIns: 'usage', corejs: 3 }]],
     plugins: [
         [
             'import',
@@ -8,11 +8,6 @@ module.exports = {
                 libraryDirectory: 'src/components',
             },
         ],
-        [
-            '@babel/plugin-transform-runtime',
-            {
-                regenerator: true,
-            },
-        ],
+        ['@babel/plugin-transform-runtime'],
     ],
 }

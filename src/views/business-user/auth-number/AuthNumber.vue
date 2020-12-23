@@ -75,8 +75,12 @@
             </div>
         </div>
         <div style="text-align: center">
-            <AioBtn :cancel="true" @click="handleBack"> 返回首页 </AioBtn>
-            <AioBtn v-if="!printed" @click="handlePrint"> 凭条打印 </AioBtn>
+            <AioBtn :cancel="true" @click="handleBack">返回首页</AioBtn>
+            <AioBtn
+                v-if="!printed && $store.getters.printerOk"
+                @click="handlePrint"
+                >凭条打印</AioBtn
+            >
         </div>
     </div>
 </template>
@@ -147,7 +151,6 @@ export default {
 
                 const params = { action, content }
                 await this.$store.dispatch('doPrint', params)
-                speakMsg('success', '打印完成，请取走凭条')
             } catch (e) {
                 console.error(e)
             }

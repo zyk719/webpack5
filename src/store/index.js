@@ -29,6 +29,8 @@ import printer from '@/store/bussiness/printer'
 import cache from '@/store/bussiness/cache'
 // 感应器
 import sensor from '@/store/bussiness/sensor'
+// 扫码器
+import qrcode from '@/store/bussiness/qrcode'
 
 Vue.use(Vuex)
 
@@ -75,5 +77,6 @@ export default new Vuex.Store({
         guideLight,
         printer,
         sensor,
+        qrcode,
     },
 })

@@ -5,6 +5,29 @@ import { putModuleStatusCall } from '@/api/bussiness/equipment'
 
 export const STATUS_KEY = 'StDeviceStatus'
 
+export const CONTROLLERS = {
+    // 读卡器
+    CardReader: 'idc',
+    // 领标器1
+    Checkout: 'chkout',
+    // 领标器2
+    // Checkout2: 'chkout2',
+    // 领标器3
+    // Checkout3: 'chkout3',
+    // 退标器
+    Checkin: 'chkin',
+    // 指示灯
+    GuideLight: 'glt',
+    // 打印器
+    Printer: 'rec',
+    // 输入法
+    Ime: 'ime',
+    // 感应器
+    Sensor: 'snr',
+    // 扫码器
+    Qr: 'bcr',
+}
+
 export const STATUS = {
     OPEN: ['OpenCompleted', 'ConnectionOpened'],
     CLOSE: 'ConnectionClosed',
@@ -29,6 +52,8 @@ export const TIMEOUT = {
     READ_IMAGE: 1000 * 60 * 5,
     // 退标器
     CHECKIN: 1000 * 60 * 10,
+    // 扫码器
+    READ_QR: 1000 * 10,
 }
 
 export const LOGIC_NAME = {
@@ -47,6 +72,10 @@ export const LOGIC_NAME = {
     PRINTER: 'ReceiptPrinter',
     // 感应器
     SENSOR: 'Sensors',
+    // 扫码器
+    QR: 'BCR310',
+    // 门磁铁
+    door: 'SIU310',
 }
 
 export const API = {
@@ -69,6 +98,8 @@ export const API = {
     // 感应器
     START_SENSOR: 'EnableProximity',
     STOP_SENSOR: 'DisableProximity',
+    // 扫码器
+    READ_QR: 'ReadBarcode',
 }
 
 /**
@@ -196,11 +227,31 @@ const reportSensor = async () => {
     console.log(new Date().toLocaleString(), '感应器上报状态：', params)
 }
 
+// 扫码器状态 3
+const reportQr = async () => {
+    const state = store.getters.qrStatus
+    const status = state[STATUS_KEY]
+    const statusMapper = {
+        [STATUS.HEALTHY]: 1,
+    }
+
+    const params = {
+        module_type: 3,
+        module_status: statusMapper[status] || 2,
+        module_status_desc: status || '',
+    }
+
+    await putModuleStatusCall(params)
+
+    console.log(new Date().toLocaleString(), '扫码器上报状态：', params)
+}
+
 // 定时上报
 export const reportEquipmentStatusInterval = () => {
     const report = async () => {
         await reportCheckout()
-        await reportCheckin()
+        // await reportCheckin()
+        await reportQr()
         await reportPrinter()
         await reportCardReader()
         await reportSensor()

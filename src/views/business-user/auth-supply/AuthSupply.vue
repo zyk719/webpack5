@@ -162,6 +162,9 @@
             <AioBtn :cancel="true" :disabled="loading" @click="handleBack"
                 >返回首页</AioBtn
             >
+            <AioBtn v-show="status.fill" @click="$store.dispatch('readQr')"
+                >扫码领取</AioBtn
+            >
             <AioBtn v-show="status.fill" @click="confirm">申领茶标</AioBtn>
             <AioBtn
                 v-show="

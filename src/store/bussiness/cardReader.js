@@ -108,6 +108,10 @@ const cardReader = {
          * 用于 QWebBridge 连接，CardReader 打开后保持跳转
          */
         toPath: undefined,
+        /**
+         * todo 放卡超时回调队列
+         */
+        putQueue: [],
     },
     getters: {
         cardReaderStatus(state) {
@@ -168,6 +172,12 @@ const cardReader = {
         },
         setToPath(state, toPath) {
             state.toPath = toPath
+        },
+        pushPutQueue(state) {
+            state.putQueue.push(new Date().getTime())
+        },
+        shiftPutQueue(state) {
+            state.putQueue.shift()
         },
     },
     actions: {
@@ -235,6 +245,9 @@ const cardReader = {
              */
             subscriber.add('Timeout', (res) => {
                 xLog('Timeout          回调，返回值：', res)
+                // todo 只在登录页时提示超时
+                // todo 如果又回来了就会被触发
+                console.error('++', console.log(router.app.$route.path))
                 if (state.processNodes.forPut) {
                     dispatch('closeIdcLight')
                     speakMsg('warning', '未在指定时间内放卡')

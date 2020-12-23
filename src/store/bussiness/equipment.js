@@ -14,6 +14,7 @@ import { getEquipmentInfoCall, getBoxInfoCall } from '@/api/bussiness/equipment'
 import { WEBSOCKET_ADDRESS } from '@/config'
 import {
     API,
+    CONTROLLERS,
     pResRej,
     reportEquipmentStatusInterval,
 } from '@/store/bussiness/common'
@@ -135,28 +136,8 @@ const equipment = {
             return p
         },
         setController({ state, commit, dispatch }) {
-            const controllers = {
-                // 读卡器
-                CardReader: 'idc',
-                // 领标器1
-                Checkout: 'chkout',
-                // 领标器2
-                Checkout2: 'chkout2',
-                // 领标器3
-                Checkout3: 'chkout3',
-                // 退标器
-                Checkin: 'chkin',
-                // 指示灯
-                GuideLight: 'glt',
-                // 打印器
-                Printer: 'rec',
-                // 输入法
-                Ime: 'ime',
-                // 感应器
-                Sensor: 'snr',
-            }
-            Object.keys(controllers).forEach((key) => {
-                const controller = state.qtObjects[controllers[key]]
+            Object.keys(CONTROLLERS).forEach((key) => {
+                const controller = state.qtObjects[CONTROLLERS[key]]
                 const type = `set${key}ControllerSubscriber`
                 commit(type, controller)
             })
@@ -164,11 +145,12 @@ const equipment = {
             // 同时打开
             dispatch('openCardReader')
             dispatch('openCheckout')
-            dispatch('openCheckout2')
-            dispatch('openCheckout3')
+            // dispatch('openCheckout2')
+            // dispatch('openCheckout3')
             dispatch('openPrinter')
             dispatch('openGuideLight')
             dispatch('openSensor')
+            dispatch('openQr')
 
             // 定时上报
             setTimeout(reportEquipmentStatusInterval, 1000 * 10)

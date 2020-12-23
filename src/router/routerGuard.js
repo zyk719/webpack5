@@ -263,7 +263,9 @@ function routerGuard(router) {
         const loginAndToNum =
             loginStatus === USER_LOGIN_STATUS_NAME && to.path === '/user/number'
         if (loginAndToNum) {
-            await store.dispatch('isPrinterOk')
+            try {
+                await store.dispatch('isPrinterOk')
+            } catch (e) {}
         }
 
         // 返回用户首页，关闭所有灯光
