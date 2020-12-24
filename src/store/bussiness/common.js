@@ -26,6 +26,8 @@ export const CONTROLLERS = {
     Sensor: 'snr',
     // 扫码器
     Qr: 'bcr',
+    // 取标门
+    Door: 'dor',
 }
 
 export const STATUS = {
@@ -54,6 +56,8 @@ export const TIMEOUT = {
     CHECKIN: 1000 * 60 * 10,
     // 扫码器
     READ_QR: 1000 * 10,
+    // 取标门
+    FOR_TAKE: 1000 * 60,
 }
 
 export const LOGIC_NAME = {
@@ -75,7 +79,7 @@ export const LOGIC_NAME = {
     // 扫码器
     QR: 'BCR310',
     // 门磁铁
-    door: 'SIU310',
+    DOOR: 'SIU310',
 }
 
 export const API = {
@@ -100,6 +104,9 @@ export const API = {
     STOP_SENSOR: 'DisableProximity',
     // 扫码器
     READ_QR: 'ReadBarcode',
+    // 取标门
+    READY: 'EnableAllEvents',
+    DOOR_SWITCH: 'SetGuidLightSync',
 }
 
 /**
@@ -210,7 +217,7 @@ const reportCardReader = async () => {
 
 // 感应器状态 8
 const reportSensor = async () => {
-    const state = store.getters.sensorStatus
+    const state = store.getters.SensorStatus
     const status = state[STATUS_KEY]
     const statusMapper = {
         [STATUS.HEALTHY]: 1,

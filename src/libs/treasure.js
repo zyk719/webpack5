@@ -17,6 +17,9 @@ export const log =
           )
         : () => {}
 
+export const cLog = (text, color = 'black') =>
+    console.log(`%c ${text}`, `color:${color};font-weight:bold;`)
+
 /**
  * @type {boolean}
  */

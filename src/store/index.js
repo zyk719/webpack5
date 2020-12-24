@@ -31,6 +31,8 @@ import cache from '@/store/bussiness/cache'
 import sensor from '@/store/bussiness/sensor'
 // 扫码器
 import qrcode from '@/store/bussiness/qrcode'
+// 取标门
+import door from '@/store/bussiness/door'
 
 Vue.use(Vuex)
 
@@ -78,5 +80,6 @@ export default new Vuex.Store({
         printer,
         sensor,
         qrcode,
+        door,
     },
 })

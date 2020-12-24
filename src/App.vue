@@ -29,6 +29,17 @@ export default {
     mounted() {
         window.onresize = suitScale.bind(this, this.scale)
     },
+    watch: {
+        // 检测到 门 & 门感应器 & 门磁铁开关 都已打开时，打开门和感应的事件通道
+        '$store.getters.doorFriendsOk'(status) {
+            status && this.$store.dispatch('doorReady')
+            // status && this.$store.dispatch('doOpenDoor')
+        },
+        // 检测到门被关上，吸住
+        '$store.getters.doorClosed'(status) {
+            status && this.$store.dispatch('doCloseDoor')
+        },
+    },
 }
 </script>
 

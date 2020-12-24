@@ -151,6 +151,7 @@ const equipment = {
             dispatch('openGuideLight')
             dispatch('openSensor')
             dispatch('openQr')
+            dispatch('openDoor')
 
             // 定时上报
             setTimeout(reportEquipmentStatusInterval, 1000 * 10)

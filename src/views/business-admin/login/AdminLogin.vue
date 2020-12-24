@@ -43,7 +43,7 @@
                     :disabled="loading"
                     :cancel="true"
                     @click="$router.push('/user/crossroad')"
-                    style="width: 100%;margin-top: 30px;"
+                    style="width: 100%; margin-top: 30px"
                 >
                     返回
                 </AioBtn>
@@ -51,7 +51,7 @@
                     width="390"
                     :loading="loading"
                     @click="handleLogin"
-                    style="width: 100%;margin-top: 30px;"
+                    style="width: 100%; margin-top: 30px"
                 >
                     登录
                 </AioBtn>
@@ -105,6 +105,7 @@ export default {
                 this.loading = true
                 await this.$store.dispatch('adminLogin', this.params)
                 this.goCrossroad()
+                this.$store.dispatch('doOpenDoor')
             } catch (e) {
                 this.$refs.randNum.createRandUrl()
             } finally {

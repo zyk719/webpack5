@@ -159,12 +159,15 @@
             </div>
         </div>
         <div style="text-align: center">
-            <AioBtn :cancel="true" :disabled="loading" @click="handleBack"
+            <AioBtn
+                :cancel="true"
+                :disabled="loading && !taken"
+                @click="handleBack"
                 >返回首页</AioBtn
             >
-            <AioBtn v-show="status.fill" @click="$store.dispatch('readQr')"
-                >扫码领取</AioBtn
-            >
+            <!--            <AioBtn v-show="status.fill" @click="$store.dispatch('readQr')"-->
+            <!--                >扫码领取</AioBtn-->
+            <!--            >-->
             <AioBtn v-show="status.fill" @click="confirm">申领茶标</AioBtn>
             <AioBtn
                 v-show="
@@ -260,6 +263,7 @@ export default {
             ],
             printed: false,
             apply_code: '',
+            taken: false,
         }
     },
     computed: {
@@ -296,6 +300,10 @@ export default {
                 }
             },
             immediate: true,
+        },
+        // 监听开门
+        '$store.getters.doorOpened'(status) {
+            status && (this.taken = true)
         },
     },
     mounted() {
@@ -466,6 +474,7 @@ export default {
             /** 将机器的出标标号提交给服务器 todo 导去异常页 */
             try {
                 await this.putSign(apply_id, equipmentbox_id, sign)
+                this.$store.dispatch('doOpenDoor')
             } catch (e) {
                 // 接口报异常即机器故障
                 // todo 机器门被强拉开标被取走
@@ -501,13 +510,24 @@ export default {
             this.statusTransfer('success')
         },
         refill() {
+            if (!this.taken) {
+                this.$Message.warning('请先取走本次的茶标')
+                return
+            }
+
+            if (this.$store.getters.doorOpened) {
+                this.$Message.warning('请先关闭取标门')
+                return
+            }
+
             this.statusTransfer('fill')
-            // 清空已填写数据
             this.params = defaultParams()
             // 填充第一个规格
             this.fillFirstSpecs()
             // 清空凭条打印记录
             this.printed = false
+            // 清空领取记录
+            this.taken = false
         },
 
         /** 接口调用 */

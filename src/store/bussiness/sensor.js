@@ -1,4 +1,4 @@
-import { log, speakMsg } from '@/libs/treasure'
+import { cLog, log, speakMsg } from '@/libs/treasure'
 import { getToken } from '@/libs/util'
 import { USER_LOGIN_STATUS_NAME } from '@/store/bussiness/cardReader'
 import EventNotifiers from '@/store/bussiness/EventNotifiers'
@@ -9,13 +9,17 @@ import {
     LOGIC_NAME,
     TIMEOUT,
 } from '@/store/bussiness/common'
+import { Message } from 'view-design'
 
 const _NAME = '感应器'
 const _NAME_ENG = 'Sensor'
 const _NAME_LOGIC = LOGIC_NAME.SENSOR
+const _STATUS = `${_NAME_ENG}Status`
+const _IS_OK = `is${_NAME_ENG}Ok`
 const _INIT_ = `set${_NAME_ENG}ControllerSubscriber`
 const _OPEN_ = `open${_NAME_ENG}`
-const _CHECK_ = `is${_NAME_ENG}Ok`
+const _CHECK_ = `check${_NAME_ENG}`
+
 const xLog = log.bind(null, _NAME)
 
 let subscriber
@@ -23,103 +27,86 @@ let subscriber
 const sensor = {
     state: {
         controller: {},
-        /**
-         * 状态节点
-         * 标记注入
-         * 标记读卡器打开
-         */
         statusNodes: {
-            inject: false,
             open: false,
+            doorOpen: false,
         },
+        status: undefined, // 'RUN' | 'SUPERVISOR'
     },
     getters: {
-        sensorStatus(state) {
+        [_STATUS](state) {
             let o = null
             try {
-                o = JSON.parse(state.controller.strState)
+                o = JSON.parse(state.controller['strState'])
             } catch (e) {
                 o = {}
             }
             return o
         },
+        [_IS_OK](state, getters) {
+            const stateObj = getters[_STATUS]
+            return {
+                status: stateObj[STATUS_KEY] === STATUS.HEALTHY,
+                statusName: stateObj[STATUS_KEY],
+            }
+        },
+        // StOperatorSwitchState
     },
     mutations: {
         [_INIT_](state, controller) {
             state.controller = controller
             subscriber = new EventNotifiers(state.controller)
-
-            // 状态登记
-            state.statusNodes.inject = true
+        },
+        setSensorStatus(state, status) {
+            state.status = status
         },
     },
     actions: {
-        /** hardware */
-        // 打开感应器
-        [_OPEN_]({ state, dispatch }) {
+        /** hardware **/
+        [_CHECK_]({ getters }) {
+            const { status, statusName } = getters[_IS_OK]
+            status || Message.error(`${_NAME}异常：状态${statusName}`)
+
+            return status
+        },
+        [_OPEN_]({ state, dispatch, commit }) {
             subscriber.removeAll()
 
             /** 注册所有事件 **/
 
-            /**
-             * OpenCompleted
-             * 连接领标器：无设备不可连接，走 FatalError 回调 -43
-             * 首次连接时才会触发
-             */
-            let isFirst = false
-            subscriber.add('OpenCompleted', (res) => {
-                xLog('OpenCompleted    回调，返回值：', res)
-                isFirst = true
+            subscriber.add('OpenCompleted', () => {})
+
+            subscriber.add('ConnectionOpened', () => {
+                const { open, doorOpen } = state.statusNodes
+                const allClose = !open && !doorOpen
+                const oneOpen = open && !doorOpen
+                if (allClose) {
+                    cLog('👌 人感应器', '#1890ff')
+                    state.statusNodes.open = true
+                    setTimeout(dispatch, 1000, 'startSensor')
+
+                    state.controller[API.CONNECT](
+                        LOGIC_NAME.DOOR,
+                        TIMEOUT.CONNECT
+                    )
+                } else if (oneOpen) {
+                    cLog('👌 门感应器', '#1890ff')
+                    state.statusNodes.doorOpen = true
+                }
             })
 
-            /**
-             * ConnectionOpened
-             * 首次连接和再次连接均会被调用
-             */
-            subscriber.add('ConnectionOpened', (res) => {
-                xLog('ConnectionOpened 回调，返回值：', res)
-                state.statusNodes.open = true
-
-                setTimeout(() => {
-                    dispatch('startSensor')
-
-                    if (isFirst) {
-                        xLog(JSON.parse(state.controller.strState))
-                    }
-                }, 99)
-            })
-
-            /**
-             * DeviceError
-             * 在出标时会报异常，可通过 state.customer.checkoutLoading 判断
-             * 且异常后，ReadImageComplete 回调不会再被调用
-             * 1. todo 手动上报异常
-             * 2. 关灯
-             * 3. 返回首页
-             * */
-            subscriber.add('DeviceError', (res) => {
-                xLog('DeviceError      回调，返回值：', res)
-            })
-
-            /**
-             * FatalError
-             * 硬件未连接时，会报这个错 res -43
-             */
-            subscriber.add('FatalError', (res) => {
-                xLog('FatalError       回调，返回值：', res)
-            })
-
-            subscriber.add('Timeout', (res) => {
-                xLog('Timeout          回调，返回值：', res)
-            })
+            subscriber.add('Timeout', () => {})
 
             subscriber.add('ProximityChanged', (res) => {
-                xLog('ProximityChanged', res)
                 // OFF 有人靠近 | ON 离开
                 if (res === 'OFF') {
+                    cLog('🔰 物体感应-靠近')
+
                     // 关闭屏保
                     document.querySelector('.screen-saver').click()
                 } else if (res === 'ON') {
+                    cLog('🔰 物体感应-离开')
+
                     // 已登录时人离开
                     const loginStatus = getToken()
                     if (loginStatus === USER_LOGIN_STATUS_NAME) {
@@ -128,36 +115,30 @@ const sensor = {
                 }
             })
 
+            // res : 'RUN' | 'SUPERVISOR'
+            subscriber.add('OperatorSwitchChanged', (status) => {
+                if (status === 'RUN') {
+                    cLog('🔰 门感应-打开')
+                } else if (status === 'SUPERVISOR') {
+                    cLog('🔰 门感应-关闭')
+                }
+                commit('setSensorStatus', status)
+            })
+
             state.controller[API.CONNECT](_NAME_LOGIC, TIMEOUT.CONNECT)
         },
-        [_CHECK_]({ state }) {
-            const stateJson = state.controller.strState
 
-            let o = null
-            try {
-                o = JSON.parse(stateJson)
-                xLog('状态', o)
-            } catch (e) {
-                return Promise.reject(`${_NAME}状态解析异常`)
-            }
-
-            if (o[STATUS_KEY] !== STATUS.HEALTHY) {
-                return Promise.reject(`${_NAME}状态：${o[STATUS_KEY]}`)
-            }
-
-            return Promise.resolve()
-        },
-
+        /** business **/
         // 启用
-        async startSensor({ state, dispatch }) {
-            try {
-                await dispatch('isSensorOk')
-            } catch (e) {
+        startSensor({ state, dispatch }) {
+            if (!dispatch(_CHECK_)) {
                 return
             }
 
             state.controller[API.START_SENSOR]((ret) => {
-                xLog(ret)
+                if (ret === '0') {
+                    cLog('✅ 人感应器已打开', 'green')
+                }
             })
         },
     },

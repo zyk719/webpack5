@@ -204,6 +204,7 @@ function routerGuard(router) {
             from.path.startsWith('/admin') && to.path.startsWith('/user')
         const isAdminLogin = loginStatus === ADMIN_LOGIN_STATUS_NAME
         if (isFromAdminToUser) {
+            store.dispatch('doCloseDoor')
             isAdminLogin &&
                 store.dispatch('adminLogout').then(() => log('管理员已退出'))
             NProgress.start()
@@ -241,6 +242,12 @@ function routerGuard(router) {
         if (loginAndToSupply) {
             try {
                 await store.dispatch('isCheckoutOk')
+
+                if (store.getters.doorOpened) {
+                    Message.destroy()
+                    Message.error('取标门未关闭，请先关闭')
+                    return next('/user/crossroad')
+                }
             } catch (e) {
                 Message.error('领标器异常')
                 return next('/user/crossroad')
