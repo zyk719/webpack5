@@ -1,49 +1,54 @@
 <template>
     <div class="crossroad flex-center">
-        <router-link tag="div" class="big-btn save" to="/admin/put_tea_sign">
-            茶标存放
-        </router-link>
-        <router-link tag="div" class="big-btn take" to="/admin/take_tea_sign">
-            领标取出
-        </router-link>
+        <router-link tag="div" class="big-btn save" to="/admin/put_tea_sign"
+            >茶标存放</router-link
+        >
+        <router-link tag="div" class="big-btn take" to="/admin/take_tea_sign"
+            >领标取出</router-link
+        >
         <router-link
             tag="div"
             class="big-btn back"
             to="/admin/take_tea_sign_back"
+            >退标取出</router-link
         >
-            退标取出
-        </router-link>
-        <router-link tag="div" class="big-btn view" to="/admin/log">
-            记录查看
-        </router-link>
+        <router-link tag="div" class="big-btn view" to="/admin/log"
+            >记录查看</router-link
+        >
         <AioBtn
             class="clear-fault-btn"
             :cancel="true"
-            style="right: 428px"
+            style="right: 670px"
             width="125"
             height="60"
             @click="existAdmin"
+            >返回</AioBtn
         >
-            返回
-        </AioBtn>
         <AioBtn
             class="clear-fault-btn"
-            style="right: 280px"
+            style="right: 525px"
             width="125"
             height="60"
             @click="refreshPage"
+            >刷新</AioBtn
         >
-            刷新
-        </AioBtn>
+        <AioBtn
+            class="clear-fault-btn"
+            style="right: 280px"
+            width="225"
+            height="60"
+            :loading="loading"
+            @click="openDoor"
+            >开领标门</AioBtn
+        >
         <AioBtn
             class="clear-fault-btn"
             width="225"
             height="60"
             :loading="loading"
             @click="clearFault"
+            >故障清除</AioBtn
         >
-            故障清除
-        </AioBtn>
     </div>
 </template>
 
@@ -78,6 +83,9 @@ export default {
             } finally {
                 this.loading = false
             }
+        },
+        openDoor() {
+            this.$store.dispatch('doOpenDoor')
         },
     },
 }

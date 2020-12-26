@@ -6,3 +6,4 @@ package-lock.json
 /node_modules
 /dist.rar
 /dist/
+/yarn-error.log

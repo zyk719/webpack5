@@ -1,17 +1,17 @@
 <template>
     <div class="flex-column">
-        <UserAuthTitle style="padding: 36px 0;">协议签订</UserAuthTitle>
+        <UserAuthTitle style="padding: 36px 0">协议签订</UserAuthTitle>
         <div class="main flex-column">
             <div class="text scroll-bar">
                 <Agreement />
             </div>
             <div class="sign-btn flex-ac-fs">
-                <Checkbox v-if="!isSign" :disabled="isSign" v-model="approve">
-                    同意以上协议条款，
-                </Checkbox>
+                <Checkbox v-if="!isSign" :disabled="isSign" v-model="approve"
+                    >同意以上协议条款，</Checkbox
+                >
                 <span class="title">签名：</span>
                 <img
-                    style="border-bottom: 2px solid #333;"
+                    style="border-bottom: 2px solid #333"
                     v-show="imgUrl"
                     :src="imgUrl"
                     height="77"
@@ -22,9 +22,8 @@
                     width="177"
                     height="60"
                     @click="onOpenESign"
+                    >点击签名</AioBtn
                 >
-                    点击签名
-                </AioBtn>
             </div>
         </div>
         <div class="footer flex-center">
@@ -32,12 +31,11 @@
                 :disabled="loading"
                 :cancel="true"
                 @click="$router.push('/user/crossroad')"
+                >返回首页</AioBtn
             >
-                返回首页
-            </AioBtn>
-            <AioBtn v-show="!isSign" :loading="loading" @click="submit">
-                签订
-            </AioBtn>
+            <AioBtn v-show="!isSign" :loading="loading" @click="submit"
+                >签订</AioBtn
+            >
         </div>
         <div class="modal-sign" v-show="showSign">
             <ESign ref="eSign" @finish="onFinish" />

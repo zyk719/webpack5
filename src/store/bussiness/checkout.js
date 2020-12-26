@@ -7,7 +7,7 @@
 import router from '@/router'
 
 /** helpers */
-import { log } from '@/libs/treasure'
+import { cLog, log } from '@/libs/treasure'
 import { pResRej } from '@/store/bussiness/common'
 import { hex2Str } from '@/libs/treasure'
 
@@ -21,16 +21,20 @@ import {
 } from '@/store/bussiness/common'
 import EventNotifiers from '@/store/bussiness/EventNotifiers'
 import { putCheckoutErrorCall } from '@/api/bussiness/user'
+import { Message } from 'view-design'
 
 const _NAME = '领标器'
 const _NAME_ENG = 'Checkout'
 const _NAME_LOGIC = LOGIC_NAME.CHECKOUT
+const _STATUS = `${_NAME_ENG}Status`
+const _IS_OK = `is${_NAME_ENG}Ok`
 const _INIT_ = `set${_NAME_ENG}ControllerSubscriber`
 const _OPEN_ = `open${_NAME_ENG}`
-const _CHECK_ = `is${_NAME_ENG}Ok`
-const xLog = log.bind(null, _NAME)
+const _CHECK_ = `check${_NAME_ENG}`
 const _SEND_SIGN_ = 'sendSign'
 const _READ_IMAGE_ = 'readImage'
+
+const xLog = log.bind(null, _NAME)
 
 /**
  * params
@@ -77,62 +81,70 @@ const checkout = {
         },
     },
     getters: {
-        checkoutStatus(state) {
+        [_STATUS](state) {
             let o = null
             try {
-                o = JSON.parse(state.controller.strState)
+                o = JSON.parse(state.controller['strState'])
             } catch (e) {
                 o = {}
             }
             return o
+        },
+        [_IS_OK](state, getters) {
+            const stateObj = getters[_STATUS]
+            return {
+                status: stateObj[STATUS_KEY] === STATUS.HEALTHY,
+                statusName: stateObj[STATUS_KEY],
+            }
         },
     },
     mutations: {
         [_INIT_](state, controller) {
             state.controller = controller
             subscriber = new EventNotifiers(state.controller)
-
-            // 状态登记
-            state.statusNodes.inject = true
         },
     },
     actions: {
         /** hardware **/
+
+        [_CHECK_]({ getters }) {
+            const { status, statusName } = getters[_IS_OK]
+            status || Message.error(`${_NAME}异常：状态${statusName}`)
+
+            return status
+        },
+
         // 打开领标器
         [_OPEN_]({ state, dispatch }) {
             subscriber.removeAll()
 
             /** 注册所有事件 **/
 
-            /**
-             * OpenCompleted
-             * 连接领标器：无设备不可连接，走 FatalError 回调 -43
-             * 首次连接时才会触发
-             */
+            // 首次连接时才会触发
             let isFirst = false
-            subscriber.add('OpenCompleted', (res) => {
-                xLog('OpenCompleted    回调，返回值：', res)
+            subscriber.add('OpenCompleted', () => {
+                cLog('👌 领标器 1st', '#1890ff')
                 isFirst = true
             })
 
             /**
-             * ConnectionOpened
              * 首次连接和再次连接均会被调用
              * 首次连接时会调用 8 次，具体看图片：checkout_websocket_open.png
              */
             let count = 0
-            subscriber.add('ConnectionOpened', (res) => {
-                xLog('ConnectionOpened 回调，返回值：', res)
-                isFirst || (state.statusNodes.open = true)
+            subscriber.add('ConnectionOpened', () => {
+                const markOpen = () => {
+                    state.statusNodes.open = true
+                    cLog('👌 领标器', '#1890ff')
+                }
+
+                if (!isFirst) {
+                    markOpen()
+                    return
+                }
 
                 /** 重连后页面跳转 todo 调用 8 次行为是否稳定 */
-                count++
-                if (count === 8) {
-                    state.statusNodes.open = true
-                    setTimeout(() => {
-                        xLog(JSON.parse(state.controller.strState))
-                    }, 99)
-                }
+                ++count === 8 && markOpen()
             })
 
             /**
@@ -155,7 +167,7 @@ const checkout = {
                         equ_user_code: '',
                     }
                     putCheckoutErrorCall({})
-                    return router.push('/user/cross')
+                    return router.push('/user/crossroad')
                 }
             })
 
@@ -163,20 +175,16 @@ const checkout = {
              * FatalError
              * 硬件未连接时，会报这个错 res -43
              */
-            subscriber.add('FatalError', (res) => {
-                xLog('FatalError       回调，返回值：', res)
-            })
+            subscriber.add('FatalError', () => xLog('FatalError'))
 
-            subscriber.add('Timeout', (res) => {
-                xLog('Timeout          回调，返回值：', res)
-            })
+            subscriber.add('Timeout', () => xLog('Timeout'))
 
             /**
              * ReadImageComplete
              * 出标结束时调用，返回出标数据
              */
             subscriber.add('ReadImageComplete', (res) => {
-                xLog('ReadImageComplete回调，返回值：', hex2Str(res))
+                cLog(`🔰 出标结束：${hex2Str(res)}`)
                 resolve(res)
             })
 
@@ -198,22 +206,11 @@ const checkout = {
             })
             */
 
-            state.controller[API.CONNECT](_NAME_LOGIC, TIMEOUT.CONNECT)
-        },
-        [_CHECK_]({ state }) {
-            const stateJson = state.controller.strState
-            let o = null
-            try {
-                o = JSON.parse(stateJson)
-                xLog('状态', o)
-            } catch (e) {
-                return Promise.reject(`${_NAME}状态解析异常`)
-            }
-            if (o[STATUS_KEY] !== STATUS.HEALTHY) {
-                return Promise.reject(`${_NAME}状态：${o[STATUS_KEY]}`)
-            }
-
-            return Promise.resolve()
+            state.controller[API.CONNECT](
+                _NAME_LOGIC,
+                TIMEOUT.CONNECT,
+                (res) => res
+            )
         },
 
         // 出标

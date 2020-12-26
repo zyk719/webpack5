@@ -57,6 +57,8 @@ async function getVersion() {
 
 function routerGuard(router) {
     router.beforeEach(async (to, from, next) => {
+        const backUserCrossroad = () => next('/user/crossroad')
+
         // log(from.path, to.path)
         NProgress.done()
 
@@ -80,7 +82,7 @@ function routerGuard(router) {
                     setToken('')
                 }
                 if (to.path !== '/user/crossroad') {
-                    return next('/user/crossroad')
+                    return backUserCrossroad()
                 }
             }
 
@@ -153,7 +155,7 @@ function routerGuard(router) {
             if (loginStatus) {
                 equipmentStatus({}).catch(() => {
                     Message.warning('自助机异常，暂时无法为您提供服务。')
-                    next('/user/crossroad')
+                    backUserCrossroad()
                 })
             }
 
@@ -174,7 +176,7 @@ function routerGuard(router) {
                     console.error(e)
                     Message.destroy()
                     Message.error('读卡器异常，本机暂时无法为您提供服务。')
-                    return next('/user/crossroad')
+                    return backUserCrossroad()
                 }
 
                 // 服务器查询设备状态
@@ -183,7 +185,7 @@ function routerGuard(router) {
                 } catch (e) {
                     Message.destroy()
                     Message.warning('自助机异常，暂时无法为您提供服务。')
-                    return next('/user/crossroad')
+                    return backUserCrossroad()
                 }
             }
         }
@@ -240,17 +242,14 @@ function routerGuard(router) {
         const loginAndToSupply =
             loginStatus === USER_LOGIN_STATUS_NAME && to.path === '/user/supply'
         if (loginAndToSupply) {
-            try {
-                await store.dispatch('isCheckoutOk')
+            if (!(await store.dispatch('checkCheckout'))) {
+                return backUserCrossroad()
+            }
 
-                if (store.getters.doorOpened) {
-                    Message.destroy()
-                    Message.error('取标门未关闭，请先关闭')
-                    return next('/user/crossroad')
-                }
-            } catch (e) {
-                Message.error('领标器异常')
-                return next('/user/crossroad')
+            if (store.getters.doorOpened) {
+                Message.destroy()
+                Message.error('取标门未关闭，请先关闭')
+                return backUserCrossroad()
             }
         }
 
@@ -262,7 +261,7 @@ function routerGuard(router) {
                 await store.dispatch('isCheckinOk')
             } catch (e) {
                 Message.error('退标器异常')
-                return next('/user/crossroad')
+                return backUserCrossroad()
             }
         }
 

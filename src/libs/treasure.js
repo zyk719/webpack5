@@ -225,6 +225,7 @@ export const hex2Str = (hex) => {
 /**
  * speak
  * @param text
+ * @param msgType
  */
 export const speakMsg = (msgType, text) => {
     Message[msgType](text)

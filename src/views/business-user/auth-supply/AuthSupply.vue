@@ -159,10 +159,7 @@
             </div>
         </div>
         <div style="text-align: center">
-            <AioBtn
-                :cancel="true"
-                :disabled="loading && !taken"
-                @click="handleBack"
+            <AioBtn :cancel="true" :disabled="loading" @click="handleBack"
                 >返回首页</AioBtn
             >
             <!--            <AioBtn v-show="status.fill" @click="$store.dispatch('readQr')"-->
@@ -381,10 +378,19 @@ export default {
             speakMsg('success', '打印完成，请取走凭条')
         },
         handleBack() {
+            // 用户没有取走本次茶标时不允许返回首页
+            if (!this.taken && this.status.success) {
+                this.$Message.destroy()
+                this.$Message.warning('请先取走本次的茶标')
+                return
+            }
+
+            // 已取走卡时返回首页，调用登出接口，登出接口自带返回首页逻辑，直接返回
             if (this.takenCardCheckout) {
                 this.$store.dispatch('takeIcCardCb')
                 return
             }
+
             this.$router.push('/user/crossroad')
         },
 
@@ -416,43 +422,42 @@ export default {
             this.statusTransfer('fill')
         },
         async submitSupply() {
-            /** 1. 领标器状态检查 */
-            try {
-                await store.dispatch('isCheckoutOk')
-            } catch (e) {
-                this.$Message.error('领标器异常')
+            // 1. 领标器状态检查
+            if (!(await this.$store.dispatch('checkCheckout'))) {
                 return this.$router.push('/user/crossroad')
             }
 
-            /** 2. todo 仓门关闭检查并吸住 */
+            // 2. 仓门关闭检查并吸住
+            if (this.$store.getters.doorOpened) {
+                this.$Message.destroy()
+                this.$Message.warning('请先关闭取标门')
+                return
+            }
 
-            /** 3. 打开屏幕禁止 */
+            // 3. 按钮禁止点击
             this.$store.commit('setCheckoutLoading', true)
 
-            /** 4. 请求可出标盒子信息 */
+            // 4. 请求可出标盒子信息
             let boxInfo
             try {
                 boxInfo = await this.getBoxInfo()
             } catch (e) {
-                // 请求出标盒子时发生异常：
-                // 0. 关闭屏幕禁止
-                // 1. 提示客户重试
                 this.$store.commit('setCheckoutLoading', false)
-                this.$Message.warning(
-                    '请求出标信息时发生异常，可点击确认申领按钮重试。'
-                )
+                this.$Message.warning('发生异常，请点击确认申领按钮重试。')
                 return
             }
             const { apply_code, apply_id, equipmentbox_id, box_code } = boxInfo
             this.apply_code = apply_code
 
-            /** 接口完成后，茶农申请的茶标量已被冻结 */
+            /** **/
+            /** 接口完成后，茶农申请的茶标数量已被冻结 **/
+            /** **/
 
-            /** 5. 调用设备出标 */
+            // 5. 调用设备出标 todo 出标卡住无法获取状态
             let checkoutMsg, sign
             try {
                 checkoutMsg = this.$Message.loading({
-                    content: '正在出标，结束前请勿打开仓门！',
+                    content: '正在出标，请稍候...',
                     duration: 0,
                 })
                 sign = await this.$store.dispatch('readImage', {
@@ -474,11 +479,8 @@ export default {
             /** 将机器的出标标号提交给服务器 todo 导去异常页 */
             try {
                 await this.putSign(apply_id, equipmentbox_id, sign)
-                this.$store.dispatch('doOpenDoor')
             } catch (e) {
                 // 接口报异常即机器故障
-                // todo 机器门被强拉开标被取走
-
                 // todo 给客户打印异常凭证：单号、申领数量
                 this.$Message.error('标号上报异常')
                 // 返回首页
@@ -487,35 +489,33 @@ export default {
                 this.$store.commit('setCheckoutLoading', false)
             }
 
-            /** 提示取标 */
+            // 页面切换
+            this.statusTransfer('success')
+
+            // 开门
+            await this.$store.dispatch('doOpenDoor')
+
+            // 提示取标
             speakMsg(
                 'success',
                 '您的茶标已完成出标，请打开仓门领取并核对数量。'
             )
 
-            /** todo 开门 */
-
-            /** 7秒后语音提示关闭仓门 */
-            setTimeout(() => {
-                speakMsg('info', '茶标领取完成后请关闭仓门')
-            }, 1000 * 7)
-
-            /** 更新茶农标量数据 */
+            // 更新茶农标量数据
             await this.$store.dispatch(
                 'getUserInfo',
                 this.$store.state.customer.code
             )
-
-            /** 页面切换 */
-            this.statusTransfer('success')
         },
         refill() {
             if (!this.taken) {
+                this.$Message.destroy()
                 this.$Message.warning('请先取走本次的茶标')
                 return
             }
 
             if (this.$store.getters.doorOpened) {
+                this.$Message.destroy()
                 this.$Message.warning('请先关闭取标门')
                 return
             }

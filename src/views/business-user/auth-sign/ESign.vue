@@ -1,9 +1,9 @@
 <template>
     <div class="e-sign">
-        <div style="margin-bottom: 50px;">
-            <AioBtn width="200" height="85" @click="clear" :cancel="true">
-                重写
-            </AioBtn>
+        <div style="margin-bottom: 50px">
+            <AioBtn width="200" height="85" @click="clear" :cancel="true"
+                >重写</AioBtn
+            >
             <AioBtn width="200" height="85" @click="commit">确定</AioBtn>
         </div>
         <canvas
@@ -73,8 +73,8 @@ export default {
             this.emptySize = await this.getSize()
         },
         getSize() {
-            return new Promise(resolve =>
-                this.$refs.eSign.toBlob(blob => resolve(blob.size))
+            return new Promise((resolve) =>
+                this.$refs.eSign.toBlob((blob) => resolve(blob.size))
             )
         },
         draw(start, end) {
@@ -86,7 +86,7 @@ export default {
             this.canvasTxt.closePath()
         },
         downloadSignImg() {
-            this.$refs.eSign.toBlob(blob => {
+            this.$refs.eSign.toBlob((blob) => {
                 let url = window.URL.createObjectURL(blob)
                 let link = document.createElement('a')
                 link.style.display = 'none'
@@ -98,8 +98,8 @@ export default {
             })
         },
         getBlob() {
-            return new Promise(resolve =>
-                this.$refs.eSign.toBlob(blob => resolve(blob))
+            return new Promise((resolve) =>
+                this.$refs.eSign.toBlob((blob) => resolve(blob))
             )
         },
 

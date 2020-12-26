@@ -133,7 +133,7 @@ export const backHome = () => router.replace('/user/crossroad')
 
 // 领标器状态 1
 const reportCheckout = async () => {
-    const state = store.getters.checkoutStatus
+    const state = store.getters.CheckoutStatus
     const status = state[STATUS_KEY]
     const statusMapper = {
         [STATUS.HEALTHY]: 1,
