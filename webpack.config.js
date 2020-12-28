@@ -69,7 +69,7 @@ const rules = ((env) => {
 })(process.env.NODE_ENV)
 const plugins = ((env) => {
     const plugins = [
-        new webpackBundleAnalyzer.BundleAnalyzerPlugin(),
+        // new webpackBundleAnalyzer.BundleAnalyzerPlugin(),
         new MiniCssExtractPlugin({
             filename: './css/[name].[contenthash].css',
         }),

@@ -8,14 +8,13 @@
  */
 
 /** helpers */
-import { log } from '@/libs/treasure'
+import { cLog, log } from '@/libs/treasure'
 import { getToken } from '@/libs/util'
 import { getEquipmentInfoCall, getBoxInfoCall } from '@/api/bussiness/equipment'
 import { WEBSOCKET_ADDRESS } from '@/config'
 import {
     API,
     CONTROLLERS,
-    pResRej,
     reportEquipmentStatusInterval,
 } from '@/store/bussiness/common'
 import { Message } from 'view-design'
@@ -25,43 +24,28 @@ import { ADMIN_LOGIN_STATUS_NAME, login, logout } from '@/api/app/user'
 
 const equipment = {
     state: {
-        /**
-         * 正在连接到 QWebBridge
-         */
+        // 正在连接到 QWebBridge
         connecting: true,
-        /**
-         * 是否连接到 QWebBridge
-         */
+        // 是否连接到 QWebBridge
         connected: false,
-        /**
-         * 初始化 QWebChannel 的返回值
-         * 由 QWebBridge.exe 程序返回
-         */
+        // 初始化 QWebChannel 的返回值，由 QWebBridge.exe 程序返回
         qtObjects: {},
-        /**
-         * 设备信息（设备端取）：设备接口获取
-         */
-        equipmentBase: {
-            mac: '',
-        },
-        /**
-         * 设备信息（服务器端）：服务器接口获取
-         */
+        // 设备 mac 地址
+        mac: '',
+        // 设备信息（服务器端）：服务器接口获取
         equipmentInfo: {},
-        /**
-         * 设备盒子信息：服务器接口获取
-         */
+        // 设备盒子信息：服务器接口获取
         boxInfo: [],
     },
     getters: {
         // 设备编号
         equipmentCode(state) {
-            return state.equipmentInfo.equipment_code
+            return state.equipmentInfo['equipment_code']
         },
         // 领标模块
         takeBox(state) {
             return (boxType) =>
-                state.boxInfo.filter((box) => box.box_type === boxType)
+                state.boxInfo.filter((box) => box['box_type'] === boxType)
         },
     },
     mutations: {
@@ -74,77 +58,72 @@ const equipment = {
         setQtObjects(state, qtObjects) {
             state.qtObjects = qtObjects
         },
-        setEquipmentBase(state, equipmentBase) {
-            state.equipmentBase = equipmentBase
+        setMac(state, mac) {
+            state.mac = mac
         },
-        setEquipmentInfo(state, { equipmentInfo }) {
+        setEquipmentInfo(state, equipmentInfo) {
             state.equipmentInfo = equipmentInfo
         },
-        setBoxInfo(state, { boxInfo }) {
+        setBoxInfo(state, boxInfo) {
             state.boxInfo = boxInfo
         },
     },
     actions: {
+        /** hardware **/
         async connect({ state, commit }) {
-            const { p, res, rej } = pResRej()
+            return new Promise((res, rej) => {
+                const open = () => res(socket)
 
-            const open = () => {
-                res(socket)
-            }
-            const close = () => {
-                if (state.connected) {
-                    Message.warning('与 QWebBridge 连接断开')
-                    commit('setConnectStatus', false)
+                const close = () => {
+                    if (state.connected) {
+                        Message.error('与 QWebBridge 连接断开')
+                        commit('setConnectStatus', false)
 
-                    // todo 需要设备页
+                        // todo 需要设备页
+                    }
                 }
-            }
-            const error = (evt) => {
-                rej(evt)
-            }
-            const message = (evt) => {
-                log('websocket message', evt)
-            }
 
-            const socket = new WebSocket(WEBSOCKET_ADDRESS)
-            socket.addEventListener('open', open)
-            socket.addEventListener('close', close)
-            socket.addEventListener('error', error)
-            // socket.addEventListener('message', message)
-            return p
+                const socket = new WebSocket(WEBSOCKET_ADDRESS)
+                socket.addEventListener('open', open)
+                socket.addEventListener('close', close)
+                socket.addEventListener('error', rej)
+
+                // const message = (evt) => log('websocket message', evt)
+                // socket.addEventListener('message', message)
+            })
         },
         async initQWebChannel({ dispatch }, socket) {
-            const { p, res, rej } = pResRej()
-
-            try {
-                new QWebChannel(socket, res)
-            } catch (e) {
-                rej(e)
-            }
-
-            return p
+            return new Promise((resolve, reject) => {
+                try {
+                    // ⚠️ QWebChannel 通过 QWebChannel.js 全局挂载
+                    new window.QWebChannel(socket, resolve)
+                } catch (e) {
+                    cLog('⚠️ 初始化 QWebChannel 异常', 'red', e)
+                    reject(e)
+                }
+            })
         },
         async getMac({ state }) {
-            const { p, res, rej } = pResRej()
-
-            try {
-                state.qtObjects.common[API.GET_MAC](res)
-            } catch (e) {
-                rej(e)
-            }
-
-            return p
+            return new Promise((resolve, reject) => {
+                try {
+                    state.qtObjects['common'][API.GET_MAC](resolve)
+                } catch (e) {
+                    reject(e)
+                }
+            })
         },
         setController({ state, commit, dispatch }) {
+            // 设置控制器
             Object.keys(CONTROLLERS).forEach((key) => {
                 const controller = state.qtObjects[CONTROLLERS[key]]
                 const type = `set${key}ControllerSubscriber`
                 commit(type, controller)
             })
 
-            // 同时打开
+            // 打开设备管理器
             dispatch('openCardReader')
             dispatch('openCheckout')
+            dispatch('openCheckin')
             // dispatch('openCheckout2')
             // dispatch('openCheckout3')
             dispatch('openPrinter')
@@ -163,70 +142,65 @@ const equipment = {
             let socket
             try {
                 socket = await dispatch('connect')
-                log('QWebBridge 已连接')
+                cLog('👌 QWebBridge', '#1890ff')
             } catch (e) {
                 commit('setToPath', undefined)
                 commit('setConnecting', false)
 
                 Message.destroy()
                 Message.error('QWebBridge 连接失败')
-                console.error('QWebBridge 连接失败', e)
+                cLog('⚠️ QWebBridge 连接失败', 'red', e)
                 return
             }
 
             /** 2. QWebChannel */
             try {
                 const { objects } = await dispatch('initQWebChannel', socket)
-                commit('setConnectStatus', true)
+                cLog('👌 QWebChannel', '#1890ff')
                 commit('setQtObjects', objects)
-                log('QWebChannel 初始化完成')
+
+                commit('setConnectStatus', true)
+                commit('setConnecting', false)
             } catch (e) {
                 commit('setToPath', undefined)
+                commit('setConnecting', false)
 
                 Message.destroy()
                 Message.error('QWebChannel 初始化失败')
-                console.error('QWebChannel 初始化失败', e)
+                cLog('⚠️ QWebChannel 初始化失败', 'red', e)
                 return
-            } finally {
-                commit('setConnecting', false)
             }
 
             /** 3. mac */
             try {
                 const macInfo = await dispatch('getMac')
                 const mac = JSON.parse(macInfo)['MACINFO'][0]['MACADDRESS']
-                commit('setEquipmentBase', { mac })
+                commit('setMac', mac)
+                cLog('👌 mac', '#1890ff')
 
-                // 管理员已登录，获取设备信息和盒子信息
+                // ⚠️ 管理员已登录时，获取设备信息和盒子信息
                 if (getToken() === ADMIN_LOGIN_STATUS_NAME) {
                     dispatch('getEquipmentInfo')
                     dispatch('getBoxInfo')
                 }
-                log('Mac 获取完成')
             } catch (e) {
                 Message.error('Mac 获取失败')
-                console.error('Mac 获取失败', e)
+                cLog('⚠️ Mac 获取失败', 'red', e)
                 return
             }
 
             /** 4. controller */
             dispatch('setController')
         },
+
+        /** business 管理员端业务 **/
         async getEquipmentInfo({ commit }) {
             const { obj } = await getEquipmentInfoCall({})
-            const equipmentInfo = obj
-            commit({
-                type: 'setEquipmentInfo',
-                equipmentInfo,
-            })
+            commit('setEquipmentInfo', obj)
         },
         async getBoxInfo({ commit }) {
             const { obj } = await getBoxInfoCall({})
-            const boxInfo = obj
-            commit({
-                type: 'setBoxInfo',
-                boxInfo,
-            })
+            commit('setBoxInfo', obj)
         },
         async adminLogin({ dispatch }, data) {
             await login(data)
@@ -235,14 +209,8 @@ const equipment = {
         },
         async adminLogout({ commit }) {
             await logout()
-            commit({
-                type: 'setEquipmentInfo',
-                equipmentInfo: {},
-            })
-            commit({
-                type: 'setBoxInfo',
-                equipmentInfo: {},
-            })
+            commit('setEquipmentInfo', {})
+            commit('setBoxInfo', {})
         },
     },
 }

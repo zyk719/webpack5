@@ -86,9 +86,6 @@ function routerGuard(router) {
                 }
             }
 
-            /** 硬件初始化 */
-            store.dispatch('initX')
-
             /** 版本号刷新 */
             if (!isDev) {
                 getVersion().then(({ version }) =>
@@ -257,10 +254,7 @@ function routerGuard(router) {
         const loginAndToBack =
             loginStatus === USER_LOGIN_STATUS_NAME && to.path === '/user/back'
         if (loginAndToBack) {
-            try {
-                await store.dispatch('isCheckinOk')
-            } catch (e) {
-                Message.error('退标器异常')
+            if (!(await store.dispatch('checkCheckin'))) {
                 return backUserCrossroad()
             }
         }

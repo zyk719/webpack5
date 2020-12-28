@@ -304,29 +304,29 @@ export default {
             this.loading = true
             try {
                 const equ_user_code = this.$store.state.customer.code
-                const mark_count = this.$store.state.returnBox.count
+                // const mark_count = this.$store.state.returnBox.count
+                const mark_codes = this.$store.state.returnBox.barcode.join(';')
                 const equipmentbox_id = this.checkinBoxInfo.equipmentbox_id
                 const params = {
                     equ_user_code,
                     detail_json: [
                         {
-                            mark_count,
+                            mark_codes,
                             equipmentbox_id,
                             specifications: '250',
                         },
                     ],
                 }
-                const {
-                    obj: {
-                        growerInfoList: [{ return_num }],
-                    },
-                } = await submitBackCall(params)
+                const { obj } = await submitBackCall(params)
+
+                console.log('obj', obj)
 
                 // 展示服务器对所退茶标的校验信息
-                this.returnNum = return_num
+                this.returnNum = 99
 
                 // 清空已提交的数据
                 this.$store.commit('setCount', 0)
+                this.$store.commit('setBarcode', [])
 
                 // 更新用户信息
                 this.$store.dispatch('getUserInfo', equ_user_code)
@@ -349,7 +349,7 @@ export default {
 
 <style scoped lang="less">
 .content {
-    width: 1200px;
+    width: 1288px;
     height: calc(100% - 399px);
     padding-top: 60px;
     margin: 0 auto;

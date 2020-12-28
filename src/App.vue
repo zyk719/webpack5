@@ -5,6 +5,8 @@
 </template>
 
 <script>
+import store from '@/store'
+
 function suitScale(scale) {
     const newScale = {
         x: (window.innerWidth / 1920).toFixed(20),
@@ -27,6 +29,7 @@ export default {
         suitScale(this.scale)
     },
     mounted() {
+        this.startEquipment()
         window.onresize = suitScale.bind(this, this.scale)
     },
     watch: {
@@ -38,6 +41,11 @@ export default {
         // 检测到门被关上，吸住
         '$store.getters.doorClosed'(status) {
             status && this.$store.dispatch('doCloseDoor')
+        },
+    },
+    methods: {
+        startEquipment() {
+            this.$store.dispatch('initX')
         },
     },
 }

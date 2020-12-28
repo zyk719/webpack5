@@ -161,12 +161,14 @@ const checkout = {
                     res,
                     JSON.parse(state.controller.strState)
                 )
-                if (state.customer.checkoutLoading) {
+                // todo 接口待调试，退标过程中会被调用
+                if (state.checkoutLoading) {
+                    console.error('出标时 DeviceError 异常接口触发')
                     dispatch('closeCheckoutLight')
-                    const params = {
-                        equ_user_code: '',
-                    }
-                    putCheckoutErrorCall({})
+                    // const params = {
+                    //     equ_user_code: '',
+                    // }
+                    // putCheckoutErrorCall({})
                     return router.push('/user/crossroad')
                 }
             })

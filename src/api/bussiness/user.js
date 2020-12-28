@@ -39,8 +39,8 @@ export const putBackBoxCall = call(
 
 // 3.2.9 茶农退标
 export const submitBackCall = call(
-    // '/equipmentMarkApply_equ/grower_giveBack.action'
-    '/equipmentMarkApply_equ/grower_giveBackForNum.action'
+    '/equipmentMarkApply_equ/grower_giveBack.action'
+    // '/equipmentMarkApply_equ/grower_giveBackForNum.action'
 )
 
 // 3.2.10 茶农剩余标量查询

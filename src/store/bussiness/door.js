@@ -26,8 +26,6 @@ const _INIT_ = `set${_NAME_ENG}ControllerSubscriber`
 const _OPEN_ = `open${_NAME_ENG}`
 const _CHECK_ = `check${_NAME_ENG}`
 
-const xLog = log.bind(null, _NAME)
-
 let subscriber
 
 export default {

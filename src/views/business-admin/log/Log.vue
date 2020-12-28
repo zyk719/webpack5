@@ -122,7 +122,7 @@ export default {
             return suitColumns(action)
         },
         mac() {
-            return this.$store.state.equipment.equipmentBase.mac
+            return this.$store.state.equipment.mac
         },
     },
     watch: {

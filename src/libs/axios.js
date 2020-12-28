@@ -102,7 +102,7 @@ class HttpRequest {
     }
 
     getInsideConfig() {
-        const macaddr = store.state.equipment.equipmentBase.mac
+        const macaddr = store.state.equipment.mac
         const headers = { macaddr }
         return {
             headers,
