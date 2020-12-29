@@ -26,4 +26,7 @@ module.exports = {
 
     /** 状态上报间隔 */
     REPORT_INTERVAL: 1000 * 60 * 5,
+
+    /** 开门上报参数， localStorage name */
+    OPEN_DOOR_CACHE_NAME: 'openDoorParamsArr',
 }

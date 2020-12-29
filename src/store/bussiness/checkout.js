@@ -53,9 +53,9 @@ function buildReadImageParams(box, total) {
         box,
         // front image
         JSON.stringify({
-            usMode: 5,
+            usMode: 3,
             ucCutEn: 1,
-            ucSpeed: 3,
+            ucSpeed: 2,
             ucTotle: total,
         }),
         // back image

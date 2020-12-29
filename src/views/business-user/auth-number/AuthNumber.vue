@@ -2,75 +2,93 @@
     <div>
         <UserAuthTitle>标量查询</UserAuthTitle>
         <div class="content">
-            <div class="title flex-ac-fs">
-                <span style="font-weight: bold; padding-right: 5px">
-                    {{ info.grower_name }}
-                </span>
-                先生，茶农编号
-                <span style="font-weight: bold; padding-left: 5px">
-                    {{ info.grower_code }}
-                </span>
-                ，您好，您的标量信息如下：
-            </div>
-            <div style="margin-top: 60px" class="flex-ac-fs">
-                <div style="width: 500px" class="flex-ac-fs">
-                    <span class="title">核准量：</span>
-                    <span class="text flex-ac-js">
-                        {{ userCurrentNumber.all_amount / 1000 || 0 }}
-                        <span class="title" style="padding-left: 7px">
-                            千克
-                        </span>
+            <div v-show="canQuery">
+                <div class="title flex-ac-fs">
+                    <span style="font-weight: bold; padding-right: 5px">
+                        {{ info.grower_name }}
                     </span>
-                </div>
-                <div class="flex-ac-fs">
-                    <span class="title">划转量：</span>
-                    <span class="text flex-ac-js">
-                        {{ userCurrentNumber.transfer_amount / 1000 || 0 }}
-                        <span class="title" style="padding-left: 7px">
-                            千克
-                        </span>
+                    先生，茶农编号
+                    <span style="font-weight: bold; padding-left: 5px">
+                        {{ info.grower_code }}
                     </span>
+                    ，您好，您的标量信息如下：
                 </div>
-            </div>
-            <div style="margin-top: 40px" class="flex-ac-fs">
-                <div style="flex: 0 0 500px" class="flex-ac-fs">
-                    <span class="title">申领量：</span>
-                    <span class="text flex-ac-js">
-                        {{ userCurrentNumber.entity_valid_amount / 1000 || 0 }}
-                        <span class="title" style="padding-left: 7px">
-                            千克
-                        </span>
-                    </span>
-                </div>
-                <div class="flex-ac-fs">
-                    <span class="title">剩余量：</span>
-                    <span class="text flex-ac-js">
-                        {{ userCurrentNumber.remaining_amount / 1000 || 0 }}
-                        <span class="title" style="padding-left: 7px">
-                            千克
-                        </span>
-                        <span
-                            class="title"
-                            style="display: flex; align-items: center"
-                        >
-                            （含冻结量：
-                            <span class="text">
-                                {{
-                                    userCurrentNumber.freeze_amount / 1000 || 0
-                                }}
+                <div style="margin-top: 60px" class="flex-ac-fs">
+                    <div style="width: 500px" class="flex-ac-fs">
+                        <span class="title">核准量：</span>
+                        <span class="text flex-ac-js">
+                            {{ userCurrentNumber.all_amount / 1000 || 0 }}
+                            <span class="title" style="padding-left: 7px">
+                                千克
                             </span>
-                            &nbsp;千克）
                         </span>
-                    </span>
+                    </div>
+                    <div class="flex-ac-fs">
+                        <span class="title">划转量：</span>
+                        <span class="text flex-ac-js">
+                            {{ userCurrentNumber.transfer_amount / 1000 || 0 }}
+                            <span class="title" style="padding-left: 7px">
+                                千克
+                            </span>
+                        </span>
+                    </div>
+                </div>
+                <div style="margin-top: 40px" class="flex-ac-fs">
+                    <div style="flex: 0 0 500px" class="flex-ac-fs">
+                        <span class="title">申领量：</span>
+                        <span class="text flex-ac-js">
+                            {{
+                                userCurrentNumber.entity_valid_amount / 1000 ||
+                                0
+                            }}
+                            <span class="title" style="padding-left: 7px">
+                                千克
+                            </span>
+                        </span>
+                    </div>
+                    <div class="flex-ac-fs">
+                        <span class="title">剩余量：</span>
+                        <span class="text flex-ac-js">
+                            {{ userCurrentNumber.remaining_amount / 1000 || 0 }}
+                            <span class="title" style="padding-left: 7px">
+                                千克
+                            </span>
+                            <span
+                                class="title"
+                                style="display: flex; align-items: center"
+                            >
+                                （含冻结量：
+                                <span class="text">
+                                    {{
+                                        userCurrentNumber.freeze_amount /
+                                            1000 || 0
+                                    }}
+                                </span>
+                                &nbsp;千克）
+                            </span>
+                        </span>
+                    </div>
+                </div>
+                <div style="margin-top: 40px" class="flex-ac-fs">
+                    <div style="width: 500px" class="flex-ac-fs">
+                        <span class="title">茶地面积：</span>
+                        <span class="text flex-ac-js">
+                            {{ userCurrentNumber.tea_area || 0 }}
+                            <span class="title" style="padding-left: 7px"
+                                >亩</span
+                            >
+                        </span>
+                    </div>
                 </div>
             </div>
-            <div style="margin-top: 40px" class="flex-ac-fs">
-                <div style="width: 500px" class="flex-ac-fs">
-                    <span class="title">茶地面积：</span>
-                    <span class="text flex-ac-js">
-                        {{ userCurrentNumber.tea_area || 0 }}
-                        <span class="title" style="padding-left: 7px">亩</span>
-                    </span>
+            <div v-show="!canQuery">
+                <div class="flex-center">
+                    <img width="170" height="170" src="./sad.svg" alt="icon" />
+                    <div style="height: 170px; margin-left: 60px">
+                        <div class="title" style="line-height: 170px">
+                            未开放查询！
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -82,6 +100,11 @@
                 >凭条打印</AioBtn
             >
         </div>
+        <!-- 状态查询蒙层 -->
+        <Spin fix v-if="$store.state.cache.getOpenStatusLoading">
+            <Icon class="demo-spin-icon-load" type="ios-loading" :size="50" />
+            <div>查询开放状态查询中...</div>
+        </Spin>
     </div>
 </template>
 
@@ -105,6 +128,14 @@ export default {
         },
         info() {
             return this.$store.state.customer.info
+        },
+        canQuery() {
+            const value = this.$store.state.cache.isOpen.is_can_query_grower
+            if (value === '2') {
+                return false
+            } else if (value === '1') {
+                return true
+            }
         },
     },
     methods: {
@@ -158,13 +189,13 @@ export default {
     },
     mounted() {
         this.$store.dispatch('getUserCurrentNumber')
+        // 重新查询申领|退标|查询状态
+        this.$store.dispatch('getCheckoutCheckinStatus')
     },
 }
 </script>
 
 <style scoped lang="less">
-@primary-color: @primary;
-
 .content {
     width: 1100px;
     height: calc(100% - 399px);
@@ -173,15 +204,21 @@ export default {
 
     .title {
         flex: 0 0 auto;
-        font-size: 36px;
-        font-weight: 400;
-        color: @primary-color;
+        .font(@primary, 36px, 400);
     }
 
     .text {
-        font-size: 48px;
-        font-weight: 600;
-        color: @primary-color;
+        .font(@primary, 48px, 600);
+    }
+}
+
+.demo-spin-icon-load {
+    color: @primary;
+    animation: ani-demo-spin 1s linear infinite;
+
+    & + div {
+        .font(@primary, 28px, 400);
+        margin-top: 10px;
     }
 }
 </style>

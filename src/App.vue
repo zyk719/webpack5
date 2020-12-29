@@ -6,6 +6,8 @@
 
 <script>
 import store from '@/store'
+import { OPEN_DOOR_CACHE_NAME } from '@/config'
+import { uploadUserOpenDoor } from '@/api/bussiness/user'
 
 function suitScale(scale) {
     const newScale = {
@@ -42,10 +44,28 @@ export default {
         '$store.getters.doorClosed'(status) {
             status && this.$store.dispatch('doCloseDoor')
         },
+        // 检测到门被打开
+        '$store.getters.doorOpened'(status) {
+            if (status) {
+                this.uploadOpen()
+            }
+        },
     },
     methods: {
         startEquipment() {
             this.$store.dispatch('initX')
+        },
+        uploadOpen() {
+            const paramsArr = JSON.parse(
+                localStorage.getItem(OPEN_DOOR_CACHE_NAME) || '[]'
+            )
+
+            paramsArr.forEach((params) => {
+                params.equ_user_code = this.$store.state.customer.code
+                uploadUserOpenDoor(params)
+            })
+
+            localStorage.setItem(OPEN_DOOR_CACHE_NAME, '[]')
         },
     },
 }

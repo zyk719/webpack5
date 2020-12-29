@@ -66,5 +66,15 @@ export const evaluationListCall = call('/markTransferPj_equ/datagrid.action')
 // 3.2.17 茶农评价
 export const evaluationSubmitCall = call('/markTransferPj_equ/evaluate.action')
 
-// 3.2.19 申领/退标是否开放
+// 3.2.19 申领|退标|查询 是否开放
 export const isOpenCall = call('/equipmentMarkApply_equ/grower_cfg.action')
+
+// 3.2.20 茶农打开门
+export const uploadUserOpenDoor = call(
+    '/equipmentMarkApply_equ/grower_open.action'
+)
+
+// 3.2.21 茶农关闭门
+export const uploadUserCloseDoor = call(
+    '/equipmentMarkApply_equ/grower_close.action'
+)

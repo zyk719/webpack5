@@ -126,8 +126,12 @@ const guideLight = {
             state.controller[API.LIGHT](equipment, action)
         },
         setDoor({ state }, { equipment, action }) {
-            action = action || LIGHT_ACTIONS.CONTINUOUS
-            state.controller[API.DOOR_SWITCH](equipment, action)
+            return new Promise((resolve, reject) => {
+                action = action || LIGHT_ACTIONS.CONTINUOUS
+                state.controller[API.DOOR_SWITCH](equipment, action, (ret) =>
+                    ret === '0' ? resolve() : reject()
+                )
+            })
         },
         // 操作灯
         lightIdc({ dispatch }) {
@@ -190,24 +194,23 @@ const guideLight = {
             setTimeout(dispatch, 100, 'setDoor', {
                 equipment: EQUIPMENT.DOOR_RIGHT,
             })
-            // dispatch('setDoor', {
-            //     equipment: EQUIPMENT.DOOR_RIGHT,
-            // })
         },
-        doOpenDoor({ dispatch }) {
-            cLog('🔰 门磁铁-松开')
-            dispatch('setDoor', {
+        async doOpenDoor({ dispatch }) {
+            if (!dispatch('checkGuideLight')) {
+                return Promise.reject()
+            }
+
+            await dispatch('setDoor', {
                 equipment: EQUIPMENT.DOOR_LEFT,
                 action: LIGHT_ACTIONS.OFF,
             })
-            setTimeout(dispatch, 100, 'setDoor', {
+
+            await dispatch('setDoor', {
                 equipment: EQUIPMENT.DOOR_RIGHT,
                 action: LIGHT_ACTIONS.OFF,
             })
-            // dispatch('setDoor', {
-            //     equipment: EQUIPMENT.DOOR_RIGHT,
-            //     action: LIGHT_ACTIONS.OFF,
-            // })
+
+            cLog('🔰 门磁铁-松开')
         },
     },
 }

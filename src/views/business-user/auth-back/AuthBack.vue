@@ -1,7 +1,10 @@
 <template>
     <div style="position: relative">
         <UserAuthTitle>茶标退还{{ status.warn ? '须知' : '' }}</UserAuthTitle>
-        <div class="content" :style="status.back ? 'padding-top: 0;' : ''">
+        <div
+            class="content"
+            :style="status.back || status.success ? 'padding-top: 0;' : ''"
+        >
             <!-- 退标提示 -->
             <div v-show="status.warn">
                 <div class="flex-center">
@@ -70,42 +73,57 @@
                     >&nbsp;枚
                 </div>
             </div>
-            <!-- 用户退标成功 -->
+            <!-- 退标信息展示 -->
             <div v-show="status.success">
-                <div class="title flex-center">
-                    <span style="font-weight: bold; padding-right: 5px">{{
-                        info.grower_name
-                    }}</span
-                    >先生，茶农编号<span
-                        style="font-weight: bold; padding-left: 5px"
-                        >{{ info.grower_code }}</span
-                    >
+                <div class="title flex-ac-fs">
+                    <span class="boldFont">{{ info.grower_name }}</span>
+                    &nbsp;先生，茶农编号：
+                    <span class="boldFont">{{ info.grower_code }}</span>
                 </div>
-                <div class="title flex-center" style="margin-top: 60px">
-                    您已成功退标成功：<span
-                        style="
-                            font-weight: bold;
-                            font-size: 36px;
-                            margin-right: 10px;
-                        "
-                        >{{ returnNum }}</span
-                    >&nbsp;枚
-                </div>
-                <div class="title flex-center" style="margin-top: 40px">
-                    当前账户剩余:<span class="boldFont"
+                <div class="title flex-ac-fs" style="margin-top: 25px">
+                    您已成功退标：
+                    <span class="boldFont">{{ returnNum }}</span>
+                    &nbsp;枚，&nbsp;您账户剩余：
+                    <span class="boldFont"
                         >{{ info.valid_amount / 1000 }}千克</span
-                    >茶标
+                    >
+                    &nbsp;茶标
+                </div>
+                <div
+                    class="title flex-ac-fs"
+                    style="margin-top: 25px; flex-direction: column"
+                >
+                    <div
+                        v-for="item in backSuccess"
+                        :key="item.apply_code"
+                        style="margin-top: 15px"
+                    >
+                        <span>退标单号：</span>
+                        <span class="boldFont">{{ item.apply_code }}</span>
+                        <br />
+                        <span>茶农编号：</span>
+                        <span class="boldFont">{{ item.grower_code }}</span>
+                        <span>茶农姓名：</span>
+                        <span class="boldFont">{{ item.grower_name }}</span>
+                        <span>退标数量：</span>
+                        <span class="boldFont"
+                            >250g * {{ item.return_num }}</span
+                        >
+                    </div>
+                </div>
+                <div
+                    class="title flex-center"
+                    style="margin-top: 25px; flex-direction: column"
+                >
+                    <div v-for="item in backFail" :key="item.apply_code">
+                        <span>{{ item.mark_code }}{{ item.errorMsg }}</span>
+                    </div>
                 </div>
             </div>
             <!-- 服务端返回无可退标盒子时提示 -->
             <div v-show="status.forbid">
                 <div class="flex-center">
-                    <img
-                        width="170"
-                        height="170"
-                        src="./surprised.svg"
-                        alt="icon"
-                    />
+                    <img width="170" height="170" src="./sad.svg" alt="icon" />
                     <div style="height: 170px; margin-left: 60px">
                         <div class="title" style="line-height: 170px">
                             未开放退标！
@@ -180,6 +198,8 @@ export default {
             returnNum: 0,
             checkinBoxInfo: {},
             printed: false,
+            backSuccess: [],
+            backFail: [],
         }
     },
     computed: {
@@ -214,7 +234,8 @@ export default {
         init() {
             // 检查是否有退标盒子
             this.readWarn()
-            // this.$store.dispatch('readImageCheckin')
+            // 重新查询申领|退标|查询状态
+            this.$store.dispatch('getCheckoutCheckinStatus')
         },
 
         /** helpers */
@@ -304,7 +325,6 @@ export default {
             this.loading = true
             try {
                 const equ_user_code = this.$store.state.customer.code
-                // const mark_count = this.$store.state.returnBox.count
                 const mark_codes = this.$store.state.returnBox.barcode.join(';')
                 const equipmentbox_id = this.checkinBoxInfo.equipmentbox_id
                 const params = {
@@ -317,12 +337,19 @@ export default {
                         },
                     ],
                 }
-                const { obj } = await submitBackCall(params)
+                const {
+                    obj: { growerInfoList, errorList },
+                } = await submitBackCall(params)
 
-                console.log('obj', obj)
+                console.log('obj', growerInfoList, errorList)
 
                 // 展示服务器对所退茶标的校验信息
-                this.returnNum = 99
+                // 数量
+                this.returnNum = growerInfoList
+                    .map((info) => info.return_num)
+                    .reduce((acc, v) => acc + v, 0)
+                this.backSuccess = growerInfoList
+                this.backFail = errorList
 
                 // 清空已提交的数据
                 this.$store.commit('setCount', 0)
@@ -362,21 +389,15 @@ export default {
     }
 
     .title {
-        font-size: 36px;
-        font-weight: 400;
-        color: @primary;
+        .font(@primary, 36px, 400);
     }
 
     .text {
-        font-size: 48px;
-        font-weight: 600;
-        color: @primary;
+        .font(@primary, 48px, 600);
     }
 
     .boldFont {
-        font-size: 36px;
-        font-weight: 600;
-        color: @primary;
+        .font(@primary, 36px, 600);
     }
 }
 .demo-spin-icon-load {

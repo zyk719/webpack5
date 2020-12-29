@@ -208,7 +208,7 @@ import AioBtn from '@/views/components/AioBtn'
 
 import { getBoxCall, putTakeCall } from '@/api/bussiness/user'
 import { dateFormat, log, speakMsg } from '@/libs/treasure'
-import store from '@/store'
+import { OPEN_DOOR_CACHE_NAME } from '@/config'
 
 const defaultParams = () => ({
     specifications: undefined,
@@ -261,6 +261,7 @@ export default {
             printed: false,
             apply_code: '',
             taken: false,
+            timeStamp: undefined,
         }
     },
     computed: {
@@ -298,9 +299,26 @@ export default {
             },
             immediate: true,
         },
-        // 监听开门
+        // 监听开门|关门
+        // 第一次打开门（!this.taken）并在3秒内关门，被认为误操作，会再次打开门
         '$store.getters.doorOpened'(status) {
-            status && (this.taken = true)
+            if (status && !this.taken) {
+                this.timeStamp = new Date().getTime()
+                this.taken = true
+            }
+        },
+        '$store.getters.doorClosed'(status) {
+            if (status && this.taken && this.timeStamp !== undefined) {
+                const now = new Date().getTime()
+                const less3second = now - this.timeStamp < 3000
+                this.timeStamp = undefined
+
+                if (less3second) {
+                    setTimeout(() => {
+                        this.$store.dispatch('doOpenDoor')
+                    }, 500)
+                }
+            }
         },
     },
     mounted() {
@@ -313,7 +331,7 @@ export default {
         init() {
             this.getSysDd()
             Object.keys(this.info).length > 0 && this.fillFirstSpecs()
-            // 重新查询茶农申领退状态
+            // 重新查询申领|退标|查询状态
             this.$store.dispatch('getCheckoutCheckinStatus')
         },
         end() {
@@ -494,6 +512,20 @@ export default {
 
             // 开门
             await this.$store.dispatch('doOpenDoor')
+
+            // 保存当前申领数据到缓存
+            const storeOpenParams = () => {
+                const params = { equipmentbox_id, apply_id }
+                const openDoorParamsArr = JSON.parse(
+                    localStorage.getItem(OPEN_DOOR_CACHE_NAME) || '[]'
+                )
+                openDoorParamsArr.push(params)
+                localStorage.setItem(
+                    OPEN_DOOR_CACHE_NAME,
+                    JSON.stringify(openDoorParamsArr)
+                )
+            }
+            storeOpenParams()
 
             // 提示取标
             speakMsg(

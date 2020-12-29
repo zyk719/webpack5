@@ -14,8 +14,10 @@ const cache = {
         isOpen: {
             // 茶农申领开放 1 是 | 2 否
             is_can_apply_grower: '2',
-            // 茶农退标开发 1 是 | 2 否
+            // 茶农退标开放 1 是 | 2 否
             is_can_refund_grower: '2',
+            // 茶农查询开放 1 是 | 2 否
+            is_can_query_grower: '2',
         },
         getOpenStatusLoading: false,
     },
