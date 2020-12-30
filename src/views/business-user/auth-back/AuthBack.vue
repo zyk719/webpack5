@@ -1,6 +1,8 @@
 <template>
     <div style="position: relative">
-        <UserAuthTitle>茶标退还{{ status.warn ? '须知' : '' }}</UserAuthTitle>
+        <UserAuthTitle style="padding-bottom: 30px"
+            >茶标退还{{ status.warn ? '须知' : '' }}</UserAuthTitle
+        >
         <div
             class="content"
             :style="status.back || status.success ? 'padding-top: 0;' : ''"
@@ -90,33 +92,44 @@
                     &nbsp;茶标
                 </div>
                 <div
+                    v-if="backSuccess.length"
                     class="title flex-ac-fs"
                     style="margin-top: 25px; flex-direction: column"
                 >
                     <div
-                        v-for="item in backSuccess"
-                        :key="item.apply_code"
+                        v-for="{
+                            apply_code,
+                            grower_code,
+                            grower_name,
+                            return_num,
+                        } in backSuccess"
+                        :key="apply_code"
                         style="margin-top: 15px"
                     >
                         <span>退标单号：</span>
-                        <span class="boldFont">{{ item.apply_code }}</span>
+                        <span class="boldFont">{{ apply_code }}</span>
                         <br />
                         <span>茶农编号：</span>
-                        <span class="boldFont">{{ item.grower_code }}</span>
+                        <span class="boldFont">{{ grower_code }}</span>
                         <span>茶农姓名：</span>
-                        <span class="boldFont">{{ item.grower_name }}</span>
+                        <span class="boldFont">{{ grower_name }}</span>
                         <span>退标数量：</span>
-                        <span class="boldFont"
-                            >250g * {{ item.return_num }}</span
-                        >
+                        <span class="boldFont">250g * {{ return_num }}</span>
                     </div>
                 </div>
-                <div
-                    class="title flex-center"
-                    style="margin-top: 25px; flex-direction: column"
-                >
-                    <div v-for="item in backFail" :key="item.apply_code">
-                        <span>{{ item.mark_code }}{{ item.errorMsg }}</span>
+                <div v-if="backFail.length" style="margin-top: 25px">
+                    <div class="title">退标异常详情：</div>
+                    <div
+                        style="height: 166px; overflow: auto"
+                        class="scroll-bar"
+                    >
+                        <div
+                            v-for="{ mark_code, errorMsg } in backFail"
+                            :key="mark_code"
+                        >
+                            <span class="error-sn">{{ mark_code }}</span>
+                            <span class="error-sn">{{ errorMsg }}</span>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -377,7 +390,7 @@ export default {
 <style scoped lang="less">
 .content {
     width: 1288px;
-    height: calc(100% - 399px);
+    height: calc(100% - 369px);
     padding-top: 60px;
     margin: 0 auto;
 
@@ -398,6 +411,12 @@ export default {
 
     .boldFont {
         .font(@primary, 36px, 600);
+    }
+
+    .error-sn {
+        display: inline-block;
+        margin-left: 30px;
+        .font(@primary, 28px);
     }
 }
 .demo-spin-icon-load {
