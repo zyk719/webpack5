@@ -1,6 +1,6 @@
 <template>
     <div style="position: relative">
-        <UserAuthTitle style="padding-bottom: 30px"
+        <UserAuthTitle style="padding-bottom: 30px; padding-top: 60px"
             >茶标退还{{ status.warn ? '须知' : '' }}</UserAuthTitle
         >
         <div
@@ -79,48 +79,54 @@
             <div v-show="status.success">
                 <div class="title flex-ac-fs">
                     <span class="boldFont">{{ info.grower_name }}</span>
-                    &nbsp;先生，茶农编号：
+                    <span>&nbsp;先生，茶农编号：</span>
                     <span class="boldFont">{{ info.grower_code }}</span>
                 </div>
                 <div class="title flex-ac-fs" style="margin-top: 25px">
-                    您已成功退标：
+                    <span>您已成功退标：</span>
                     <span class="boldFont">{{ returnNum }}</span>
-                    &nbsp;枚，&nbsp;您账户剩余：
+                    <span>&nbsp;枚，&nbsp;您账户剩余：</span>
                     <span class="boldFont"
                         >{{ info.valid_amount / 1000 }}千克</span
                     >
-                    &nbsp;茶标
+                    <span>&nbsp;茶标</span>
                 </div>
-                <div
-                    v-if="backSuccess.length"
-                    class="title flex-ac-fs"
-                    style="margin-top: 25px; flex-direction: column"
-                >
+                <div v-if="backSuccess.length" style="margin-top: 25px">
+                    <div class="title">退标详情：</div>
                     <div
-                        v-for="{
-                            apply_code,
-                            grower_code,
-                            grower_name,
-                            return_num,
-                        } in backSuccess"
-                        :key="apply_code"
-                        style="margin-top: 15px"
+                        class="success-sn scroll-bar"
+                        style="height: 175px; overflow: auto"
                     >
-                        <span>退标单号：</span>
-                        <span class="boldFont">{{ apply_code }}</span>
-                        <br />
-                        <span>茶农编号：</span>
-                        <span class="boldFont">{{ grower_code }}</span>
-                        <span>茶农姓名：</span>
-                        <span class="boldFont">{{ grower_name }}</span>
-                        <span>退标数量：</span>
-                        <span class="boldFont">250g * {{ return_num }}</span>
+                        <div
+                            v-for="{
+                                apply_code,
+                                grower_code,
+                                grower_name,
+                                return_num,
+                            } in backSuccess"
+                            :key="apply_code"
+                            style="margin-top: 13px; padding-left: 99px"
+                        >
+                            <span>退标单号：</span>
+                            <span class="success-sn">{{ apply_code }}</span>
+                            <br />
+                            <span>茶农编号：</span>
+                            <span class="success-sn">{{ grower_code }}</span>
+                            <span>&nbsp;&nbsp;茶农姓名：</span>
+                            <span class="success-sn">{{ grower_name }}</span>
+                            <span>&nbsp;&nbsp;退标数量：</span>
+                            <span class="success-sn"
+                                >250g * {{ return_num }}</span
+                            >
+                        </div>
                     </div>
                 </div>
-                <div v-if="backFail.length" style="margin-top: 25px">
-                    <div class="title">退标异常详情：</div>
+                <div v-if="backFail.length" style="margin-top: 20px">
+                    <div class="title">
+                        异常标详情（{{ backFail.length }}枚）：
+                    </div>
                     <div
-                        style="height: 166px; overflow: auto"
+                        style="height: 152px; overflow: auto; padding-top: 7px"
                         class="scroll-bar"
                     >
                         <div
@@ -128,7 +134,9 @@
                             :key="mark_code"
                         >
                             <span class="error-sn">{{ mark_code }}</span>
-                            <span class="error-sn">{{ errorMsg }}</span>
+                            <span class="error-sn" style="margin-left: 50px">{{
+                                errorMsg
+                            }}</span>
                         </div>
                     </div>
                 </div>
@@ -163,7 +171,9 @@
             <AioBtn v-show="status.submit" :loading="loading" @click="doSubmit"
                 >完成退标</AioBtn
             >
-            <AioBtn v-show="!printed && status.success" @click="handlePrint"
+            <AioBtn
+                v-show="!printed && status.success"
+                @click="handlePrint(backSuccess, backFail)"
                 >凭条打印</AioBtn
             >
             <AioBtn
@@ -188,7 +198,6 @@ import UserAuthTitle from '@/views/components/UserAuthTitle'
 import AioBtn from '@/views/components/AioBtn'
 
 import { putBackBoxCall, submitBackCall } from '@/api/bussiness/user'
-import returnBox from '@/store/bussiness/returnBox'
 import { dateFormat, speakMsg } from '@/libs/treasure'
 
 export default {
@@ -254,32 +263,44 @@ export default {
         /** helpers */
 
         /** 用户事件 */
-        async handlePrint() {
+        async handlePrint(success, error) {
             this.printed = true
+
+            // 退标成功
+            const backDetail = success.length
+                ? success.reduce((acc, v, idx) => {
+                      acc +=
+                          `     退标单号：${v.apply_code}\n\n` +
+                          `     茶农编号：${v.grower_code}    茶农姓名：${v.grower_name}\n\n` +
+                          `     退标数量：250g * ${v['return_num']}枚\n\n`
+                      if (idx < success.length - 1) {
+                          acc +=
+                              '---------------------------------------------\n\n'
+                      }
+
+                      return acc
+                  }, `   退 标 明 细：\n\n`)
+                : ''
+
+            // 退标失败
+            const errorDetail = error.length
+                ? error.reduce((acc, v) => {
+                      acc += `     ${v['mark_code']} ${v['errorMsg']}\n\n`
+
+                      return acc
+                  }, `   异 常 明 细：\n\n`)
+                : ''
+
             const { grower_name, grower_code } = this.info
             const fmt = 'yyyy-MM-dd HH:mm:ss'
-
-            let backDetail = ''
-            let num = 2
-            while (num--) {
-                backDetail +=
-                    `     退标单号：ZZTB2020112515503376973\n\n` +
-                    `     茶农编号：134523    茶农姓名：测试人员\n\n` +
-                    `     退标数量：250g * 30枚\n\n`
-                if (num >= 1) {
-                    backDetail +=
-                        '---------------------------------------------\n\n'
-                }
-            }
-
             const action = '退标'
             const content =
                 '\n*********************************************\n\n' +
                 `   茶 农 编 号：${grower_code}\n\n` +
                 `   茶 农 姓 名：${grower_name}\n\n` +
                 `   退 标 时 间：${dateFormat(fmt, new Date())}\n\n` +
-                `   退 标 明 细：\n\n` +
                 backDetail +
+                errorDetail +
                 '*********************************************\n'
 
             const params = { action, content }
@@ -390,7 +411,7 @@ export default {
 <style scoped lang="less">
 .content {
     width: 1288px;
-    height: calc(100% - 369px);
+    height: calc(100% - 330px);
     padding-top: 60px;
     margin: 0 auto;
 
@@ -415,7 +436,12 @@ export default {
 
     .error-sn {
         display: inline-block;
-        margin-left: 30px;
+        margin-left: 99px;
+        vertical-align: middle;
+        .font(@primary, 28px);
+    }
+
+    .success-sn {
         .font(@primary, 28px);
     }
 }
