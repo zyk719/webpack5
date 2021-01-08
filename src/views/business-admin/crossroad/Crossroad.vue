@@ -37,7 +37,6 @@
             style="right: 280px"
             width="225"
             height="60"
-            :loading="loading"
             @click="openDoor"
             >开领标门</AioBtn
         >

@@ -35,9 +35,12 @@ import {
 const _NAME = '读卡器'
 const _NAME_ENG = 'CardReader'
 const _NAME_LOGIC = LOGIC_NAME.IDC
+const _STATUS = `${_NAME_ENG}Status`
+const _IS_OK = `is${_NAME_ENG}Ok`
 const _INIT_ = `set${_NAME_ENG}ControllerSubscriber`
 const _OPEN_ = `open${_NAME_ENG}`
-const _CHECK_ = `is${_NAME_ENG}Ok`
+const _CHECK_ = `check${_NAME_ENG}`
+
 const xLog = log.bind(null, _NAME)
 export const USER_LOGIN_STATUS_NAME = 'userLogin'
 
@@ -114,14 +117,21 @@ const cardReader = {
         putQueue: [],
     },
     getters: {
-        cardReaderStatus(state) {
+        [_STATUS](state) {
             let o = null
             try {
-                o = JSON.parse(state.controller.strState)
+                o = JSON.parse(state.controller['strState'])
             } catch (e) {
                 o = {}
             }
             return o
+        },
+        [_IS_OK](state, getters) {
+            const stateObj = getters[_STATUS]
+            return {
+                status: stateObj[STATUS_KEY] === STATUS.HEALTHY,
+                statusName: stateObj[STATUS_KEY],
+            }
         },
     },
     mutations: {
@@ -130,9 +140,6 @@ const cardReader = {
         [_INIT_](state, controller) {
             state.controller = controller
             subscriber = new EventNotifiers(state.controller)
-
-            // 状态登记
-            state.statusNodes.inject = true
         },
         setUserCode(state, { code }) {
             state.code = code
@@ -182,6 +189,13 @@ const cardReader = {
     },
     actions: {
         /** hardware **/
+        [_CHECK_]({ getters }) {
+            const { status, statusName } = getters[_IS_OK]
+            status || Message.error(`${_NAME}异常：状态${statusName}`)
+
+            return status
+        },
+
         // 打开读卡器
         [_OPEN_]({ state, dispatch, commit }) {
             subscriber.removeAll()
@@ -294,22 +308,7 @@ const cardReader = {
 
             state.controller[API.CONNECT](_NAME_LOGIC, TIMEOUT.CONNECT)
         },
-        // 读卡器状态检查
-        [_CHECK_]({ state }) {
-            const stateJson = state.controller.strState
-            let o = null
-            try {
-                o = JSON.parse(stateJson)
-                xLog('状态', o)
-            } catch (e) {
-                return Promise.reject(`${_NAME}状态解析异常`)
-            }
-            if (o[STATUS_KEY] !== STATUS.HEALTHY) {
-                return Promise.reject(`${_NAME}状态：${o[STATUS_KEY]}`)
-            }
 
-            return Promise.resolve()
-        },
         // 监听放卡
         addEventListenerPut({ state, commit }) {
             const { p, res, rej } = pResRej()
@@ -369,11 +368,7 @@ const cardReader = {
         // 执行读卡操作
         async forInsert({ dispatch }) {
             /** 1. 检查读卡器 */
-            try {
-                await dispatch('isCardReaderOk')
-            } catch (e) {
-                console.error(e)
-                Message.error('读卡器异常，本机暂时无法为您提供服务。')
+            if (!(await dispatch(_CHECK_))) {
                 return
             }
 

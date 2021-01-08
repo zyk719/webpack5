@@ -152,7 +152,7 @@ const reportCheckout = async () => {
 
 // 退标器状态 2
 const reportCheckin = async () => {
-    const state = store.getters.checkinStatus
+    const state = store.getters.CheckinStatus
     const status = state[STATUS_KEY]
     const statusMapper = {
         [STATUS.HEALTHY]: 1,
@@ -198,7 +198,7 @@ const reportPrinter = async () => {
 
 // 读卡器状态 6
 const reportCardReader = async () => {
-    const state = store.getters.cardReaderStatus
+    const state = store.getters.CardReaderStatus
     const status = state[STATUS_KEY]
     const statusMapper = {
         [STATUS.HEALTHY]: 1,

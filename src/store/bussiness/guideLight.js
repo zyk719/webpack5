@@ -179,10 +179,10 @@ const guideLight = {
             })
         },
         closeAllLights({ dispatch }) {
-            dispatch('closePrinterLight')
-            dispatch('closeCheckinLight')
-            dispatch('closeCheckoutLight')
-            dispatch('closeIdcLight')
+            // dispatch('closePrinterLight')
+            // dispatch('closeCheckinLight')
+            // dispatch('closeCheckoutLight')
+            // dispatch('closeIdcLight')
         },
 
         // 操作门

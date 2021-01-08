@@ -1,7 +1,7 @@
 import { setToken } from '@/libs/util'
 import router from '@/router'
 import store from '@/store'
-import { NEED_EQUIPMENT_PAGE_ARR } from '@/router/routerGuard'
+import { NEED_EQUIPMENT_PAGE_ARR } from '@/router/utils'
 import { Message } from 'view-design'
 
 function noQWebBridge() {
@@ -33,7 +33,7 @@ function noQWebBridge() {
     }
 }
 
-window.onerror = function(errorMsg) {
+window.onerror = function (errorMsg) {
     // QWebBridge 未连接或断开
     typeof errorMsg === 'string' &&
         errorMsg.endsWith('opensocket is not defined') &&

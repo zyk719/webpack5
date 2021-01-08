@@ -17,6 +17,7 @@ import {
     CONTROLLERS,
     reportEquipmentStatusInterval,
 } from '@/store/bussiness/common'
+import router from '@/router'
 import { Message } from 'view-design'
 
 /** API */
@@ -36,6 +37,8 @@ const equipment = {
         equipmentInfo: {},
         // 设备盒子信息：服务器接口获取
         boxInfo: [],
+        // QWebBridge 连接后需要前往的页面
+        equReadyGo: '',
     },
     getters: {
         // 设备编号
@@ -66,6 +69,9 @@ const equipment = {
         },
         setBoxInfo(state, boxInfo) {
             state.boxInfo = boxInfo
+        },
+        setEquReadyGo(state, path) {
+            state.equReadyGo = path
         },
     },
     actions: {
@@ -135,7 +141,7 @@ const equipment = {
             // 定时上报
             setTimeout(reportEquipmentStatusInterval, 1000 * 10)
         },
-        async initX({ dispatch, commit }) {
+        async initX({ state, dispatch, commit }) {
             commit('setConnecting', true)
 
             /** 1. websocket */
@@ -177,6 +183,17 @@ const equipment = {
                 const mac = JSON.parse(macInfo)['MACINFO'][0]['MACADDRESS']
                 commit('setMac', mac)
                 cLog('👌 mac', '#1890ff')
+
+                // admin 只需要 mac 地址就位即可使用
+                Message.destroy()
+                if (
+                    state.equReadyGo &&
+                    state.equReadyGo.startsWith('/admin/')
+                ) {
+                    router
+                        .push(state.equReadyGo)
+                        .then(() => commit('setEquReadyGo', ''))
+                }
 
                 // ⚠️ 管理员已登录时，获取设备信息和盒子信息
                 if (getToken() === ADMIN_LOGIN_STATUS_NAME) {

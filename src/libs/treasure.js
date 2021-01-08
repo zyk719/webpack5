@@ -223,11 +223,13 @@ export const hex2Str = (hex) => {
 }
 
 /**
- * speak
- * @param text
+ * 语音和提示
  * @param msgType
+ * @param text
+ * @param clear
  */
-export const speakMsg = (msgType, text) => {
+export const speakMsg = (msgType, text, clear = false) => {
+    clear && Message.destroy()
     Message[msgType](text)
     const speechInstance = new SpeechSynthesisUtterance(text)
     speechSynthesis.speak(speechInstance)

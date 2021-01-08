@@ -76,7 +76,6 @@ const checkout = {
          * 标记读卡器打开
          */
         statusNodes: {
-            inject: false,
             open: false,
         },
     },
