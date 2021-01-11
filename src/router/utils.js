@@ -139,7 +139,7 @@ export const chkQWebBridge = (to) => {
     }
 
     if (!store.state.equipment.connected) {
-        speakMsg('info', '设备将开始连接，请稍候。', true)
+        speakMsg('info', '开始连接设备，请稍候。', true)
         store.commit('setEquReadyGo', to.path)
         store.dispatch('initX')
         return false

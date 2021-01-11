@@ -1,14 +1,11 @@
 <template>
     <div style="position: relative">
-        <UserAuthTitle style="padding-bottom: 30px; padding-top: 60px"
+        <UserAuthTitle style="padding-bottom: 30px; padding-top: 50px"
             >茶标退还{{ status.warn ? '须知' : '' }}</UserAuthTitle
         >
-        <div
-            class="content"
-            :style="status.back || status.success ? 'padding-top: 0;' : ''"
-        >
+        <div class="content" :style="status.success ? 'width: 1800px;' : ''">
             <!-- 退标提示 -->
-            <div v-show="status.warn">
+            <div v-show="status.warn" style="padding-top: 120px">
                 <div class="flex-center">
                     <img
                         width="170"
@@ -30,7 +27,7 @@
                 </div>
             </div>
             <!-- 服务端返回无可退标盒子时提示 -->
-            <div v-show="status.failed" style="margin-top: 60px">
+            <div v-show="status.failed" style="padding-top: 120px">
                 <div class="flex-center">
                     <img
                         width="170"
@@ -49,7 +46,7 @@
                 </div>
             </div>
             <!-- 用户点击启动退标 -->
-            <div v-show="status.back">
+            <div v-show="status.back" style="padding-top: 120px">
                 <div class="title flex-center">
                     <span style="font-weight: bold; padding-right: 5px">{{
                         info.grower_name
@@ -59,12 +56,10 @@
                         >{{ info.grower_code }}</span
                     >，请点击开始退标后，将茶标放入退标口：
                 </div>
-                <img class="tip" src="./happy.svg" alt="示意图" />
             </div>
             <!-- 用户完成退标操作 -->
-            <div v-show="status.submit">
-                <div class="title">&nbsp;</div>
-                <div class="title flex-center" style="margin-top: 60px">
+            <div v-show="status.submit" style="padding-top: 30px">
+                <div class="title flex-center" style="margin-bottom: 40px">
                     已接收您的退标数量为：<span
                         style="
                             font-weight: bold;
@@ -74,9 +69,18 @@
                         >{{ $store.state.returnBox.count }}</span
                     >&nbsp;枚
                 </div>
+                <TransitionImg
+                    style="display: block; margin: auto"
+                    width="730"
+                    height="411"
+                    :img="img"
+                />
             </div>
             <!-- 退标信息展示 -->
-            <div v-show="status.success">
+            <div
+                v-show="status.success"
+                style="padding-top: 120px; padding-left: 120px"
+            >
                 <div class="title flex-ac-fs">
                     <span class="boldFont">{{ info.grower_name }}</span>
                     <span>&nbsp;先生，茶农编号：</span>
@@ -142,7 +146,7 @@
                 </div>
             </div>
             <!-- 服务端返回无可退标盒子时提示 -->
-            <div v-show="status.forbid">
+            <div v-show="status.forbid" style="padding-top: 120px">
                 <div class="flex-center">
                     <img width="170" height="170" src="./sad.svg" alt="icon" />
                     <div style="height: 170px; margin-left: 60px">
@@ -196,15 +200,20 @@
 <script>
 import UserAuthTitle from '@/views/components/UserAuthTitle'
 import AioBtn from '@/views/components/AioBtn'
+import TransitionImg from '@/views/components/transitionImg'
 
 import { putBackBoxCall, submitBackCall } from '@/api/bussiness/user'
 import { dateFormat, speakMsg } from '@/libs/treasure'
 
+import backSign1 from './backSign1.png'
+import backSign2 from './backSign2.png'
+
 export default {
     name: 'AuthBack',
-    components: { UserAuthTitle, AioBtn },
+    components: { UserAuthTitle, AioBtn, TransitionImg },
     data() {
         return {
+            img: [backSign1, backSign2],
             status: {
                 warn: true,
                 back: false,
@@ -387,7 +396,7 @@ export default {
 
                 // 清空已提交的数据
                 this.$store.commit('setCount', 0)
-                this.$store.commit('setBarcode', [])
+                this.$store.commit('clearBarcode')
 
                 // 更新用户信息
                 this.$store.dispatch('getUserInfo', equ_user_code)
@@ -411,16 +420,8 @@ export default {
 <style scoped lang="less">
 .content {
     width: 1288px;
-    height: calc(100% - 330px);
-    padding-top: 60px;
+    height: calc(100% - 279px);
     margin: 0 auto;
-
-    .tip {
-        display: block;
-        margin: 40px auto 0;
-        width: 730px;
-        height: 411px;
-    }
 
     .title {
         .font(@primary, 36px, 400);

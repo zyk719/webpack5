@@ -71,6 +71,9 @@ const returnBox = {
         setBarcode(state, barcode) {
             state.barcode.push(...barcode)
         },
+        clearBarcode(state) {
+            state.barcode = []
+        },
         resetCheckin(state) {
             state.count = 0
         },

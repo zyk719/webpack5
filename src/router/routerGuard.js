@@ -3,17 +3,12 @@
  * @param router instance of VueRouter
  */
 import NProgress from 'nprogress'
-import Axios from 'axios'
 
 import store from '@/store'
-import { getToken, setToken } from '@/libs/util'
-import { isDev, log } from '@/libs/treasure'
+import { getToken } from '@/libs/util'
 import { USER_LOGIN_STATUS_NAME } from '@/store/bussiness/cardReader'
-import { ADMIN_LOGIN_STATUS_NAME } from '@/api/app/user'
 import { Message } from 'view-design'
-import { equipmentStatus } from '@/api/bussiness/user'
 import {
-    NEED_AIO_OK_PAGE_ARR,
     updateVersion,
     resetApp,
     chkQWebBridge,
@@ -24,15 +19,6 @@ import {
     chkGoLogin,
     chkGoAuth,
 } from '@/router/utils'
-
-async function getVersion() {
-    const { data } = await Axios.get('./version.json', {
-        headers: {
-            'Cache-Control': 'no-cache',
-        },
-    })
-    return data
-}
 
 function routerGuard(router) {
     router.beforeEach(async (to, from, next) => {

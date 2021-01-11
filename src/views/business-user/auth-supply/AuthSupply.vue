@@ -1,8 +1,10 @@
 <template>
     <div style="position: relative">
-        <UserAuthTitle>茶标申领</UserAuthTitle>
+        <UserAuthTitle style="padding-bottom: 30px; padding-top: 50px"
+            >茶标申领</UserAuthTitle
+        >
         <div class="content">
-            <div v-show="status.fill">
+            <div v-show="status.fill" style="padding-top: 120px">
                 <div class="flex-ac-js">
                     <div class="flex-ac-js">
                         <span class="title">姓名：</span>
@@ -14,9 +16,9 @@
                     </div>
                     <div class="flex-ac-js">
                         <span class="title">可申领量：</span>
-                        <span class="text">
-                            {{ info.valid_amount / 1000 }}&nbsp;千克
-                        </span>
+                        <span class="text"
+                            >{{ info.valid_amount / 1000 }}&nbsp;千克</span
+                        >
                     </div>
                 </div>
                 <div class="flex-ac-fs" style="margin-top: 80px">
@@ -64,16 +66,19 @@
                     </div>
                 </div>
             </div>
-            <div v-show="status.confirm">
+            <div
+                v-show="status.confirm"
+                style="padding-top: 120px; padding-left: 120px"
+            >
                 <div class="title flex-ac-fs">
-                    <span style="font-weight: bold; padding-right: 5px">
-                        {{ info.grower_name }}
-                    </span>
-                    先生，茶农编号
-                    <span style="font-weight: bold; padding-left: 5px">
-                        {{ info.grower_code }}
-                    </span>
-                    ，您好，请核对申领信息：
+                    <span style="font-weight: bold; padding-right: 5px">{{
+                        info.grower_name
+                    }}</span>
+                    <span>先生，茶农编号</span>
+                    <span style="font-weight: bold; padding-left: 5px">{{
+                        info.grower_code
+                    }}</span>
+                    <span>，您好，请核对申领信息：</span>
                 </div>
                 <div class="flex-ac-fs" style="margin-top: 60px">
                     <span class="title">申领量：</span>
@@ -81,24 +86,26 @@
                     <span class="interval">x</span>
                     <span class="boldFont">{{ params.apply_num }}枚</span>
                     <span class="interval">=</span>
-                    <span class="boldFont">
-                        {{ params.apply_num * Number(params.specifications) }}克
-                    </span>
+                    <span class="boldFont"
+                        >{{
+                            params.apply_num * Number(params.specifications)
+                        }}克</span
+                    >
                 </div>
-                <div class="flex-ac-fs" style="margin-top: 40px">
+                <div class="flex-ac-fs" style="margin-top: 60px">
                     <span class="title">剩余量：</span>
-                    <span class="boldFont">
-                        {{
+                    <span class="boldFont"
+                        >{{
                             (info.valid_amount -
                                 params.apply_num *
                                     Number(params.specifications)) /
                             1000
-                        }}千克
-                    </span>
+                        }}千克</span
+                    >
                 </div>
             </div>
             <div v-show="status.success">
-                <div class="flex-center">
+                <div class="flex-center" style="margin-bottom: 40px">
                     <img
                         width="170"
                         height="170"
@@ -133,8 +140,14 @@
                         </div>
                     </div>
                 </div>
+                <TransitionImg
+                    style="display: block; margin: auto"
+                    width="730"
+                    height="411"
+                    :img="img"
+                />
             </div>
-            <div v-show="status.failed" style="margin-top: 60px">
+            <div v-show="status.failed" style="padding-top: 120px">
                 <div class="flex-center">
                     <img width="170" height="170" src="./sad.svg" alt="icon" />
                     <div style="height: 170px; margin-left: 60px">
@@ -147,7 +160,7 @@
                     </div>
                 </div>
             </div>
-            <div v-show="status.forbid">
+            <div v-show="status.forbid" style="padding-top: 120px">
                 <div class="flex-center">
                     <img width="170" height="170" src="./sad.svg" alt="icon" />
                     <div style="height: 170px; margin-left: 60px">
@@ -205,10 +218,14 @@
 import UserAuthTitle from '@/views/components/UserAuthTitle'
 import AioInputNumber from '@/views/components/AioInputNumber'
 import AioBtn from '@/views/components/AioBtn'
+import TransitionImg from '@/views/components/transitionImg'
 
 import { getBoxCall, putTakeCall } from '@/api/bussiness/user'
-import { dateFormat, log, speakMsg } from '@/libs/treasure'
+import { dateFormat, speakMsg } from '@/libs/treasure'
 import { OPEN_DOOR_CACHE_NAME } from '@/config'
+
+import takeSign1 from './takeSign1.png'
+import takeSign2 from './takeSign2.png'
 
 const defaultParams = () => ({
     specifications: undefined,
@@ -218,9 +235,10 @@ const defaultParams = () => ({
 
 export default {
     name: 'AuthSupply',
-    components: { UserAuthTitle, AioBtn, AioInputNumber },
+    components: { UserAuthTitle, AioBtn, AioInputNumber, TransitionImg },
     data() {
         return {
+            img: [takeSign1, takeSign2],
             ddKeys: {
                 growerMax: 'XHLJ_MARK_EQUIPMENT_GROWER_NUM',
                 enterpriseMax: 'XHLJ_MARK_EQUIPMENT_ENTERPRISE_NUM',
@@ -598,9 +616,8 @@ export default {
 
 <style scoped lang="less">
 .content {
-    width: 1177px;
-    height: calc(100% - 399px);
-    padding-top: 60px;
+    width: 1288px;
+    height: calc(100% - 279px);
     margin: 0 auto;
 
     .title {

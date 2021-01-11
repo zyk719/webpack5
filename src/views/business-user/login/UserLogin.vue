@@ -1,12 +1,17 @@
 <template>
     <div class="user-login">
         <div class="login">
-            <div class="tip">
-                请将身份证或茶农卡放在识别区&nbsp;<span v-show="time > 0">
-                    {{ time }}&nbsp;秒
-                </span>
+            <div class="tip flex-center">
+                请将身份证或茶农卡放在识别区&nbsp;<span v-show="time > 0"
+                    >{{ time }}&nbsp;秒</span
+                >
             </div>
-            <img src="./for-login.svg" alt="icon" />
+            <img
+                src="./for-login.svg"
+                alt="icon"
+                style="margin-bottom: 60px; margin-top: 29px"
+            />
+            <TransitionImg width="730" height="411" :img="img" />
         </div>
         <Sidebar class="sidebar" />
     </div>
@@ -14,15 +19,19 @@
 
 <script>
 import Sidebar from '@/views/business-user/sidebar/Sidebar'
+import TransitionImg from '@/views/components/transitionImg'
 import { isDev } from '@/libs/treasure'
 import { TIMEOUT } from '@/store/bussiness/common'
+import putCard1 from './putCard1.png'
+import putCard2 from './putCard2.png'
 
 export default {
     name: 'UserLogin',
-    components: { Sidebar },
+    components: { Sidebar, TransitionImg },
     data() {
         return {
             time: TIMEOUT.INSERT / 1000,
+            img: [putCard1, putCard2],
         }
     },
     computed: {
@@ -87,13 +96,13 @@ export default {
 
     .login {
         flex: auto;
-
-        // child layout
-        padding-top: 182px;
-        text-align: center;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: flex-start;
 
         .tip {
-            margin-bottom: 100px;
+            height: 120px;
             .font(@primary, 56px, normal, 64px, 4px);
         }
     }
