@@ -1,17 +1,10 @@
 <template>
     <div class="admin-log">
         <div class="title-box">
-            <AioBtn
-                style="margin-right: 199px"
-                width="191"
-                height="65"
-                :cancel="true"
-                @click="handleBack"
-            >
+            <AioBtn width="191" height="65" :cancel="true" @click="handleBack">
                 <Icon type="ios-undo" />
                 返回
             </AioBtn>
-            <div class="title">记录查看</div>
             <RadioGroup type="button" v-model="params.business_type">
                 <Radio
                     v-for="{ label, value } in curSysDd[ddKeys.type]"
@@ -65,7 +58,7 @@ export default {
             let action = '存入'
 
             const suitColumns = (action) => {
-                const columns = [
+                let columns = [
                     {
                         title: `${action}日期`,
                         key: 'create_dt',
@@ -105,6 +98,9 @@ export default {
                         align: 'center',
                     },
                 ]
+                if (action === '开门' || action === '关门') {
+                    columns = [columns[0], columns[6]]
+                }
                 return columns
             }
 
@@ -195,10 +191,6 @@ export default {
         display: flex;
         align-items: center;
         justify-content: space-between;
-
-        .title {
-            .font(@primary, 56px, bold, normal, 4px);
-        }
 
         /deep/ .ivu-radio-wrapper {
             height: 65px;

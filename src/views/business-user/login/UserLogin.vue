@@ -22,8 +22,8 @@ import Sidebar from '@/views/business-user/sidebar/Sidebar'
 import TransitionImg from '@/views/components/transitionImg'
 import { isDev } from '@/libs/treasure'
 import { TIMEOUT } from '@/store/bussiness/common'
-import putCard1 from './putCard1.png'
-import putCard2 from './putCard2.png'
+import putCard1 from '@/views/business-user/login/putCard1.png'
+import putCard2 from '@/views/business-user/login/putCard2.png'
 
 export default {
     name: 'UserLogin',

@@ -77,70 +77,63 @@
                 />
             </div>
             <!-- 退标信息展示 -->
-            <div
-                v-show="status.success"
-                style="padding-top: 120px; padding-left: 120px"
-            >
-                <div class="title flex-ac-fs">
+            <div v-show="status.success" style="padding-top: 10px">
+                <div class="title flex-ac-fs" style="margin-bottom: 40px">
                     <span class="boldFont">{{ info.grower_name }}</span>
-                    <span>&nbsp;先生，茶农编号：</span>
+                    <span>&nbsp;先生，茶农编号&nbsp;</span>
                     <span class="boldFont">{{ info.grower_code }}</span>
-                </div>
-                <div class="title flex-ac-fs" style="margin-top: 25px">
-                    <span>您已成功退标：</span>
+                    <span>，您已成功退标&nbsp;</span>
                     <span class="boldFont">{{ returnNum }}</span>
-                    <span>&nbsp;枚，&nbsp;您账户剩余：</span>
+                    <span>&nbsp;枚，&nbsp;您账户剩余&nbsp;</span>
                     <span class="boldFont"
                         >{{ info.valid_amount / 1000 }}千克</span
                     >
                     <span>&nbsp;茶标</span>
                 </div>
-                <div v-if="backSuccess.length" style="margin-top: 25px">
-                    <div class="title">退标详情：</div>
-                    <div
-                        class="success-sn scroll-bar"
-                        style="height: 175px; overflow: auto"
-                    >
-                        <div
-                            v-for="{
-                                apply_code,
-                                grower_code,
-                                grower_name,
-                                return_num,
-                            } in backSuccess"
-                            :key="apply_code"
-                            style="margin-top: 13px; padding-left: 99px"
-                        >
-                            <span>退标单号：</span>
-                            <span class="success-sn">{{ apply_code }}</span>
-                            <br />
-                            <span>茶农编号：</span>
-                            <span class="success-sn">{{ grower_code }}</span>
-                            <span>&nbsp;&nbsp;茶农姓名：</span>
-                            <span class="success-sn">{{ grower_name }}</span>
-                            <span>&nbsp;&nbsp;退标数量：</span>
-                            <span class="success-sn"
-                                >250g * {{ return_num }}</span
+                <div class="back-detail">
+                    <div class="back-success" v-if="backSuccess.length">
+                        <div class="detail-title flex-center">退标详情</div>
+                        <div class="detail-cnt">
+                            <div
+                                class="detail-success-cell"
+                                v-for="{
+                                    apply_code,
+                                    grower_code,
+                                    grower_name,
+                                    return_num,
+                                } in backSuccess"
+                                :key="apply_code"
                             >
+                                <div>
+                                    <span class="w600">退标单号：</span>
+                                    <span>{{ apply_code }}&nbsp;</span>
+                                </div>
+                                <div>
+                                    <span class="w600">茶农：</span>
+                                    <span>{{ grower_name }}&nbsp;</span>
+                                    <span class="w600">编号：</span>
+                                    <span>{{ grower_code }}&nbsp;</span>
+                                    <span class="w600">退标数量：</span>
+                                    <span>{{ return_num }} * 250g</span>
+                                </div>
+                            </div>
                         </div>
                     </div>
-                </div>
-                <div v-if="backFail.length" style="margin-top: 20px">
-                    <div class="title">
-                        异常标详情（{{ backFail.length }}枚）：
-                    </div>
-                    <div
-                        style="height: 152px; overflow: auto; padding-top: 7px"
-                        class="scroll-bar"
-                    >
-                        <div
-                            v-for="{ mark_code, errorMsg } in backFail"
-                            :key="mark_code"
-                        >
-                            <span class="error-sn">{{ mark_code }}</span>
-                            <span class="error-sn" style="margin-left: 50px">{{
-                                errorMsg
-                            }}</span>
+                    <div class="back-fail" v-if="backFail.length">
+                        <div class="detail-title flex-center">
+                            异常标详情（{{ backFail.length }}枚）
+                        </div>
+                        <div class="detail-cnt scroll-bar">
+                            <div
+                                class="detail-fail-cell"
+                                v-for="{ mark_code, errorMsg } in backFail"
+                                :key="mark_code"
+                            >
+                                <span style="padding-right: 60px">{{
+                                    mark_code
+                                }}</span>
+                                <span>{{ errorMsg }}</span>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -172,7 +165,10 @@
                 >开始退标</AioBtn
             >
             <!-- todo 用户忘记点完成退标，需自动提交：用户取走茶农卡时，如果在退标页且未提交 -->
-            <AioBtn v-show="status.submit" :loading="loading" @click="doSubmit"
+            <AioBtn
+                v-show="status.submit && $store.state.returnBox.barcode.length"
+                :loading="loading"
+                @click="doSubmit"
                 >完成退标</AioBtn
             >
             <AioBtn
@@ -205,8 +201,8 @@ import TransitionImg from '@/views/components/transitionImg'
 import { putBackBoxCall, submitBackCall } from '@/api/bussiness/user'
 import { dateFormat, speakMsg } from '@/libs/treasure'
 
-import backSign1 from './backSign1.png'
-import backSign2 from './backSign2.png'
+import backSign1 from '@/views/business-user/auth-back/backSign1.png'
+import backSign2 from '@/views/business-user/auth-back/backSign2.png'
 
 export default {
     name: 'AuthBack',
@@ -229,8 +225,20 @@ export default {
             returnNum: 0,
             checkinBoxInfo: {},
             printed: false,
-            backSuccess: [],
-            backFail: [],
+            backSuccess: [
+                // {
+                //     apply_code: 'ZZTB2021010610301853060',
+                //     grower_code: '100651',
+                //     grower_name: '朱旭东',
+                //     return_num: '5',
+                // },
+            ],
+            backFail: [
+                // {
+                //     mark_code: '90017654',
+                //     errorMsg: '该证明标已退标，无法进行退标',
+                // },
+            ],
         }
     },
     computed: {
@@ -292,13 +300,16 @@ export default {
                 : ''
 
             // 退标失败
-            const errorDetail = error.length
-                ? error.reduce((acc, v) => {
+            let errorDetail = error.length
+                ? error.slice(0, 10).reduce((acc, v) => {
                       acc += `     ${v['mark_code']} ${v['errorMsg']}\n\n`
-
                       return acc
-                  }, `   异 常 明 细：\n\n`)
+                  }, `   异 常 明 细（${error.length}枚）：\n\n`)
                 : ''
+
+            if (error.length > 10) {
+                errorDetail += `     ......\n\n`
+            }
 
             const { grower_name, grower_code } = this.info
             const fmt = 'yyyy-MM-dd HH:mm:ss'
@@ -317,14 +328,11 @@ export default {
             speakMsg('success', `打印完成，请取走凭条`)
         },
         handleBack() {
-            // todo 判断是否正在进标
-
-            // 提交成功且退标过程中卡被取走
-            if (
-                this.status.success &&
-                this.$store.state.customer.takenCardCheckin
-            ) {
+            // 退标过程中卡被取走
+            if (this.$store.state.customer.takenCardCheckin) {
+                this.$store.dispatch('userLogout')
             }
+            this.$store.dispatch('doneCheckin')
             this.$router.push('/user/crossroad')
         },
 
@@ -383,6 +391,7 @@ export default {
                 const {
                     obj: { growerInfoList, errorList },
                 } = await submitBackCall(params)
+                this.$store.commit('setCheckinLoading', false)
 
                 console.log('obj', growerInfoList, errorList)
 
@@ -423,6 +432,10 @@ export default {
     height: calc(100% - 279px);
     margin: 0 auto;
 
+    .w600 {
+        font-weight: 600;
+    }
+
     .title {
         .font(@primary, 36px, 400);
     }
@@ -444,6 +457,78 @@ export default {
 
     .success-sn {
         .font(@primary, 28px);
+    }
+
+    .back-detail {
+        display: flex;
+        height: 464px;
+
+        .back-success {
+            background: #d8edf2;
+            flex-basis: 50%;
+            flex-grow: 1;
+            margin-right: 20px;
+            padding: 0 40px 43px;
+        }
+
+        .back-fail {
+            background: #d8edf2;
+            flex-basis: 50%;
+            flex-grow: 1;
+            padding: 0 40px 43px;
+        }
+
+        @interval-color: rgba(57, 104, 134, 0.3);
+
+        .detail-title {
+            .font(@primary, 32px);
+            height: 96px;
+            border-bottom: 1px solid @interval-color;
+        }
+
+        .detail-cnt {
+            height: 325px;
+            overflow-y: auto;
+
+            .detail-fail-cell {
+                height: 65px;
+                border-bottom: 1px solid @interval-color;
+                .font(@primary, 28px, 400, 64px);
+
+                &::before {
+                    content: '';
+                    display: inline-block;
+                    width: 16px;
+                    height: 16px;
+                    border-radius: 50%;
+                    background-color: @primary;
+                    margin-right: 20px;
+                    margin-top: 24px;
+                }
+            }
+
+            .detail-success-cell {
+                position: relative;
+                padding-left: 36px;
+                .font(@primary, 28px, 400, 64px);
+                display: flex;
+                flex-wrap: wrap;
+
+                &::before {
+                    content: '';
+                    display: inline-block;
+                    width: 16px;
+                    height: 16px;
+                    border-radius: 50%;
+                    background-color: @primary;
+                    position: absolute;
+                    left: 0;
+                    top: 24px;
+                }
+
+                border-bottom: 1px solid @interval-color;
+            }
+        }
     }
 }
 .demo-spin-icon-load {

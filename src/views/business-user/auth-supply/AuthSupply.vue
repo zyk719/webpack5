@@ -224,8 +224,8 @@ import { getBoxCall, putTakeCall } from '@/api/bussiness/user'
 import { dateFormat, speakMsg } from '@/libs/treasure'
 import { OPEN_DOOR_CACHE_NAME } from '@/config'
 
-import takeSign1 from './takeSign1.png'
-import takeSign2 from './takeSign2.png'
+import takeSign1 from '@/views/business-user/auth-supply/takeSign1.png'
+import takeSign2 from '@/views/business-user/auth-supply/takeSign2.png'
 
 const defaultParams = () => ({
     specifications: undefined,

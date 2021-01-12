@@ -106,7 +106,7 @@ const dynamicConfig = {
             : undefined,
     devServer: {
         contentBase: path.resolve(__dirname, './dist'),
-        writeToDisk: false,
+        writeToDisk: true,
         overlay: true,
         host: '0.0.0.0',
         port: 8080,
@@ -160,7 +160,6 @@ const dynamicConfig = {
                             limit: 8192,
                             name: '[name].[contenthash].[ext]',
                             outputPath: 'images',
-                            publicPath: '../images',
                             // todo 去除不要的图片
                         },
                     },

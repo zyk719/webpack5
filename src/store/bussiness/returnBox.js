@@ -76,6 +76,7 @@ const returnBox = {
         },
         resetCheckin(state) {
             state.count = 0
+            state.barcode = []
         },
     },
     actions: {
@@ -178,11 +179,8 @@ const returnBox = {
         },
         // 完成读卡
         doneCheckin({ dispatch, state }) {
-            // todo bug 完成接收可以继续读标
             state.controller[API.DONE_CHECKIN]((res) => {
-                if (res === '0') {
-                    xLog('hahaha')
-                }
+                /* res = '0' */
             })
             dispatch('closeCheckinLight')
         },
